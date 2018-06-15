@@ -19,7 +19,6 @@ namespace dashe4
 	    private readonly CallbackManager manager;
 
 	    private string version;
-	    private bool   running;
 
 	    private readonly Dictionary<ulong, Settings> chatrooms;
 
@@ -38,7 +37,6 @@ namespace dashe4
 			// Vars
 			// TODO: Get version from GitHub
 		    version   = "4.0.0-alpha.1";
-		    running   = true;
 			chatrooms = new Dictionary<ulong, Settings>();
 
 		    UniqueID = 0;
