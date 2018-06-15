@@ -11,22 +11,23 @@ namespace dashe4
 {
     class Kraxbot
     {
-	    private SteamClient     client;
-	    private SteamUser       user;
-	    private SteamFriends    friends;
-	    private SteamGroup      group;
-	    private SteamCommunity  community;
-	    private CallbackManager manager;
+	    private readonly SteamClient     client;
+	    private readonly SteamUser       user;
+	    private readonly SteamFriends    friends;
+	    private readonly SteamGroup      group;
+	    private readonly SteamCommunity  community;
+	    private readonly CallbackManager manager;
 
-	    private string         version;
-	    private bool           running;
-	    private List<Settings> chatrooms;
+	    private string version;
+	    private bool   running;
+
+	    private readonly Dictionary<ulong, Settings> chatrooms;
 
 	    public CallbackManager Manager => manager;
 
-	    public SteamID KraxID;
+	    public readonly SteamID KraxID;
 
-	    public APIKey API;
+	    public readonly APIKey API;
 
 		// SteamCommunity
 	    public uint UniqueID;
@@ -38,7 +39,7 @@ namespace dashe4
 			// TODO: Get version from GitHub
 		    version   = "4.0.0-alpha.1";
 		    running   = true;
-			chatrooms = new List<Settings>();
+			chatrooms = new Dictionary<ulong, Settings>();
 
 		    UniqueID = 0;
 
@@ -176,34 +177,29 @@ namespace dashe4
 			// Debug
 			Log($"Debug: Requesting chatroom settings for {chatID}");
 
-			// First we see if we can find it in chatrooms
-		    var settings = chatrooms.SingleOrDefault(s => s.ChatID == chatID.ToString());
+			// If there are settings, return them
+		    if (chatrooms.ContainsKey(chatID))
+			    return chatrooms[chatID];
 
-			// If we found it, return it, otherwise look in settings folder
-		    if (settings == default(Settings))
+		    // Otherwise, look in files
+		    Log("Debug: Settings not found in chatrooms, looking in files");
+		    Settings s;
+
+		    if (File.Exists($"./settings/{chatID}.json"))
 		    {
-				Log("Debug: Settings not found in chatrooms, looking in files");
-			    Settings s;
-
-			    if (File.Exists($"./settings/{chatID}.json"))
-			    {
-					Log("Debug: Settings found in file, saving to chatrooms");
-					s = JsonConvert.DeserializeObject<Settings>($"./settings/{chatID}.json");
-			    }
-			    else
-			    {
-					Log("Debug: Settings not found. Creating new ones");
-				    s = new Settings(chatID.ToString());
-				}
-
-				SaveSettingsToList(s);
-			    return s;
+			    Log("Debug: Settings found in file, saving to chatrooms");
+			    s = JsonConvert.DeserializeObject<Settings>($"./settings/{chatID}.json");
+		    }
+		    else
+		    {
+			    Log("Debug: Settings not found. Creating new ones");
+			    s = new Settings(chatID.ToString());
 		    }
 
-		    Log("Debug: Settings found in chatrooms");
-		    return settings;
+		    SaveSettingsToList(s);
+		    return s;
 	    }
 
-		private void SaveSettingsToList(Settings settings) => chatrooms.Add(settings);
-	}
+	    private void SaveSettingsToList(Settings settings) => chatrooms[ulong.Parse(settings.ChatID)] = settings;
+    }
 }
