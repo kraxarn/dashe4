@@ -9,7 +9,7 @@ using SteamKit2;
 
 namespace dashe4
 {
-    class Kraxbot
+    public class Kraxbot
     {
 	    private readonly SteamClient     client;
 	    private readonly SteamUser       user;
@@ -31,6 +31,11 @@ namespace dashe4
 		// SteamCommunity
 	    public uint UniqueID;
 	    public string UserNonce;
+
+	    /// <summary>
+	    /// The bot's Steam ID
+	    /// </summary>
+	    public SteamID SteamID => client.SteamID;
 
 	    public Kraxbot()
 	    {
@@ -86,6 +91,8 @@ namespace dashe4
 	    public void SetPersonaState(EPersonaState state) => friends.SetPersonaState(state);
 
 	    public string GetFriendPersonaName(SteamID steamID) => friends.GetFriendPersonaName(steamID);
+
+	    public EPersonaState GetFriendPersonaState(SteamID steamID) => friends.GetFriendPersonaState(steamID);
 
 	    public void LogOnToWeb()
 	    {
@@ -164,9 +171,15 @@ namespace dashe4
 
 	    public void JoinChatRoom(SteamID chatRoomID) => friends.JoinChat(chatRoomID);
 
+	    public void KickUser(SteamID chatRoomID, SteamID userID) => friends.KickChatMember(chatRoomID, userID);
+
+	    public void BanUser(SteamID chatRoomID, SteamID userID) => friends.BanChatMember(chatRoomID, userID);
+
 		/// <summary>
 		/// Gets chatroom settings and adds them to chatroom list if needed
 		/// </summary>
+		// TODO: There could be a function that directly would return settings without check
+		// This would be used in chat messages (to speed it up) and then use this on joins
 	    public Settings GetChatRoomSettings(SteamID chatRoomID)
 	    {
 			// Shortcut
@@ -180,6 +193,8 @@ namespace dashe4
 			    return chatrooms[chatID];
 
 		    // Otherwise, look in files
+			// TODO: Move (most of) loading of settings to Settings.Load?
+			// TODO: We need a way to parse 'legacy settings' to new ones
 		    Log("Debug: Settings not found in chatrooms, looking in files");
 		    Settings s;
 

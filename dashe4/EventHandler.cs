@@ -4,10 +4,10 @@ using SteamKit2;
 
 namespace dashe4
 {
-	class EventHandler
+	public class EventHandler
 	{
 		private readonly Kraxbot kraxbot;
-		private Command cmnd;
+		private readonly Command cmnd;
 
 		private bool running;
 
@@ -117,6 +117,7 @@ namespace dashe4
 		{
 			Kraxbot.Log($"{kraxbot.GetFriendPersonaName(callback.ChatterID)} ({callback.ChatRoomID}): {callback.Message}");
 
+			// TODO: We could launch this in another thread to let it do heavy stuff
 			cmnd.Handle(callback.ChatRoomID, callback.ChatterID, callback.Message);
 		}
 

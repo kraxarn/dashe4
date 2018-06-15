@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
+using SteamKit2;
 
 namespace dashe4
 {
@@ -20,7 +21,9 @@ namespace dashe4
     public class Settings
 	{
 		#region Fields
-		public enum SpamAction { Kick, Ban, None }
+		public enum SpamAction { Kick, Ban, Warn, None }
+
+		public List<UserInfo> Users;
 
 		public string     InvitedID, InvitedName;
 		public int        Ver;
@@ -127,6 +130,7 @@ namespace dashe4
 
 			ChatName = "NoName";
 			ChatID   = chatRoomID;
+			Users = new List<UserInfo>();
 
 			Spam          = SpamAction.Kick;
 			WelcomeMsg    = "Welcome";
