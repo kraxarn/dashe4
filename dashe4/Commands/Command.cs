@@ -681,6 +681,19 @@ namespace dashe4
 			}
 
 			#endregion
+
+			#region Always on commands
+
+			if (message == "!leave" && (isMod || userID == settings.InvitedID))
+			{
+				kraxbot.LeaveChat(chatRoomID);
+				SendMessage(kraxbot.KraxID, $"Left {settings.ChatName} with request from {userName}");
+				lastChatroom = chatRoomID;
+			}
+
+			#endregion
+
+
 	    }
 	}
 }
