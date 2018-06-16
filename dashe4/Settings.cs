@@ -21,18 +21,16 @@ namespace dashe4
     public class Settings
 	{
 		#region Fields
-		public enum SpamAction { Kick, Ban, Warn, None }
-
 		public List<UserInfo> Users;
 
-		public string     InvitedID, InvitedName;
-		public int        Ver;
-		public string     ChatName, ChatID;
-		public SpamAction Spam;
-		public string     WelcomeMsg, WelcomeEnd;
-		public string     LastPoke;
-		public SpamAction DCKick;
-		public string     TranslateLang;
+		public string      InvitedID, InvitedName;
+		public int         Ver;
+		public string      ChatName, ChatID;
+		public ESpamAction Spam;
+		public string      WelcomeMsg, WelcomeEnd;
+		public string      LastPoke;
+		public ESpamAction DCKick;
+		public string      TranslateLang;
 
 		public bool Cleverbot;
 		public bool CleverbotInst;
@@ -97,8 +95,8 @@ namespace dashe4
 		// Version 5 (3.0)
 		public class IntAutoKick
 		{
-			public SpamAction Mode;
-			public string     User;
+			public ESpamAction Mode;
+			public string      User;
 		}
 		public IntAutoKick AutoKick;
 
@@ -109,7 +107,7 @@ namespace dashe4
 		public class IntWordFilter
 		{
 			public bool         Enabled, IgnoreMods;
-			public SpamAction   Action;
+			public ESpamAction  Action;
 			public List<string> Filter;
 		}
 		public IntWordFilter WordFilter;
@@ -132,11 +130,11 @@ namespace dashe4
 			ChatID   = chatRoomID;
 			Users = new List<UserInfo>();
 
-			Spam          = SpamAction.Kick;
+			Spam          = ESpamAction.Kick;
 			WelcomeMsg    = "Welcome";
 			WelcomeEnd    = "!";
 			LastPoke      = "NoPoke";			// Or maybe just null
-			DCKick        = SpamAction.Kick;
+			DCKick        = ESpamAction.Kick;
 			TranslateLang = "en";
 
 			Cleverbot     = false;
@@ -209,7 +207,7 @@ namespace dashe4
 			// Version 5 (3.0)
 			AutoKick = new IntAutoKick
 			{
-				Mode = SpamAction.None,
+				Mode = ESpamAction.None,
 				User = null
 			};
 

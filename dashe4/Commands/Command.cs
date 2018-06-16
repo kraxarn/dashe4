@@ -200,17 +200,17 @@ namespace dashe4
 
 		    switch (settings.Spam)
 		    {
-				case Settings.SpamAction.Kick:
+				case ESpamAction.Kick:
 					SendMessage(kraxbot.KraxID, $"Kicked {kraxbot.GetFriendPersonaName(userID)} because of {reason} in {settings.ChatName}");
 					kraxbot.KickUser(chatRoomID, userID);
 					break;
 
-				case Settings.SpamAction.Ban:
+				case ESpamAction.Ban:
 					SendMessage(kraxbot.KraxID, $"Banned {kraxbot.GetFriendPersonaName(userID)} because of {reason} in {settings.ChatName}");
 					kraxbot.BanUser(chatRoomID, userID);
 					break;
 
-				case Settings.SpamAction.Warn:
+				case ESpamAction.Warn:
 					var user = settings.Users.Single(u => u.SteamID == userID);
 					user.Warning++;
 					user.LastTime = DateTime.Now;
@@ -343,7 +343,7 @@ namespace dashe4
 
 			// We should check for spam
 			// TODO: dashe3 still says the message, even if it can't kick
-			if (isBotMod && settings.Spam != Settings.SpamAction.None && !isMod)
+			if (isBotMod && settings.Spam != ESpamAction.None && !isMod)
 			{
 				// Duplicate messages
 				if (message == lastMessage && userID == lastUser && chatRoomID == lastChatroom)
@@ -386,15 +386,15 @@ namespace dashe4
 							SendMessage(chatRoomID, $"Please {userName}, don't use any offensive words");
 							switch (settings.WordFilter.Action)
 							{
-								case Settings.SpamAction.Kick:
+								case ESpamAction.Kick:
 									kraxbot.KickUser(chatRoomID, userID);
 									break;
 
-								case Settings.SpamAction.Ban:
+								case ESpamAction.Ban:
 									kraxbot.BanUser(chatRoomID, userID);
 									break;
 
-								case Settings.SpamAction.Warn:
+								case ESpamAction.Warn:
 									// TODO
 									break;
 							}
