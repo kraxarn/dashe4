@@ -206,13 +206,13 @@ namespace dashe4
 		    else
 		    {
 			    Log("Debug: Settings not found. Creating new ones");
-			    s = new Settings(chatID.ToString());
+			    s = new Settings(chatID);
 		    }
 
 		    SaveSettingsToList(s);
 		    return s;
 	    }
 
-	    private void SaveSettingsToList(Settings settings) => chatrooms[ulong.Parse(settings.ChatID)] = settings;
+	    private void SaveSettingsToList(Settings settings) => chatrooms[settings.ChatID] = settings;
     }
 }

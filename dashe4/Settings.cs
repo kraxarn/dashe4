@@ -6,42 +6,133 @@ using SteamKit2;
 
 namespace dashe4
 {
-	internal class User
-	{
-		public string Name;
-		public int DC, WR, SetWR, Last, LastJoin, LastLeave, LastMsg;
-
-		private User(string name = null)
-		{
-			Name = name;
-			DC = WR = SetWR = Last = LastJoin = LastLeave = LastMsg = 0;
-		}
-	}
-
+	/// <summary>
+	/// Settings for 4.x and later
+	/// </summary>
     public class Settings
 	{
+		#region Classes
+
+		public class TimeoutSettings
+		{
+			public int Random;
+			public int Define;
+			public int Games;
+			public int Recents;
+			public int Yt;
+
+			public TimeoutSettings() 
+				=> Random = Define = Games = Recents = Yt = 0;
+		}
+
+		public class CustomSettings
+		{
+			public bool Enabled;
+			public bool ModOnly;	// Unused
+
+			public int Delay;		// Unused
+
+			public string Command;
+			public string Response;
+
+			public CustomSettings()
+			{
+				Enabled = false;
+				ModOnly = false;
+
+				Delay = 5;
+
+				Command  = "!custom";
+				Response = "Custom response";
+			}
+		}
+
+		public class AutoKickSettings
+		{
+			public ulong User;
+
+			public ESpamAction Mode;
+
+			public AutoKickSettings()
+			{
+				User = 0;
+
+				Mode = ESpamAction.None;
+			}
+		}
+
+		public class DelaySettings
+		{
+			public int Random;
+			public int Define;
+			public int Games;
+			public int Recents;
+			public int Search;
+			public int Yt;
+
+			public DelaySettings()
+			{
+				Random = Games = Recents = Search = Yt = 120;
+				Define = 300;
+			}
+		}
+
+		public class WordFilterSettings
+		{
+			public bool Enabled;
+			public bool IgnoreMods;
+
+			public ESpamAction Action;
+
+			public List<string> Filter;
+
+			public WordFilterSettings()
+			{
+				Enabled    = false;
+				IgnoreMods = true;
+
+				Action = ESpamAction.Kick;
+
+				Filter = new List<string>();
+			}
+		}
+
+		#endregion
+
 		#region Fields
+
 		public List<UserInfo> Users;
 
-		public string      InvitedID, InvitedName;
-		public int         Ver;
-		public string      ChatName, ChatID;
+		public List<string> SetRules;
+
+		public int Ver;
+		public int DcLimit;
+		public int DcKickLimit;
+		public int DcBanLimit;
+		public int AppNewsID;
+
+		public string ChatName;
+		public string WelcomeMsg;
+		public string WelcomeEnd;
+		public string InvitedName;
+		public string TranslateLang;
+		public string ClearMsg;
+
+		public ulong ChatID;
+		public ulong InvitedID;
+		public ulong LastPoke;
+
 		public ESpamAction Spam;
-		public string      WelcomeMsg, WelcomeEnd;
-		public string      LastPoke;
-		public ESpamAction DCKick;
-		public string      TranslateLang;
+		public ESpamAction DcKick;
 
 		public bool Cleverbot;
-		public bool CleverbotInst;
-		public bool Translate;		// Unused until 3.0
+		public bool Translate;
 		public bool Commands;
 		public bool Welcome;
-		//public bool Lenny;		// Removed in 3.0
 		public bool Games;
 		public bool Define;
 		public bool Wiki;
-		public bool Search;		// Removed in 2.0.2, Added back in 3.2
+		public bool Search;
 		public bool Weather;
 		public bool Store;
 		public bool Responses;
@@ -50,103 +141,63 @@ namespace dashe4
 		public bool Poke;
 		public bool AllStates;
 		public bool AllPoke;
-		public bool NewApp;		// Removed in 3.0
+		public bool NewApp;
 		public bool AutoWelcome;
+		public bool Beta;
+		public bool PostAnn;
+		public bool FirstJoin;
+		public bool Currency;
+		public bool AutoLeave;
 
-		public int DCLimit;
-		public int RandomDelay;
-		public int DefineDelay;
-		public int GamesDelay;
-		public int RecentsDelay;
-		public int LennyDelay;
-		public int SearchDelay;
-		public int YTDelay;
-		
-		// Version 1 (1.14.3)
-		public bool IRC;
-		
-		// Version 2 (2.0)
-		public List<string> SetRules;
-		public bool Beta; 			// Unused
-		public bool PostAnn; 		// Unused
-		public bool FirstJoin;		// Unused
-		public int DCKickLimit; 	// Unused
-		public int DCBanLimit; 	// Unused
-		public int AppNewsID; 		// Unused
-		public bool Currency; 		// Unused
+		public TimeoutSettings Timeout;
 
-		// Version 3 (2.0)
-		public class IntTimeout
-		{
-			public int Random, Define, Games, Recents, Search, YT;
-		}
-		public IntTimeout Timeout;
-		
-		// Version 4 (2.0)
-		public class IntCustom
-		{
-			public bool Enabled;
-			public bool ModOnly;
-			public int Delay;
-			public string Command, Response;
-		}
-		public IntCustom Custom;
-		
-		// Version 5 (3.0)
-		public class IntAutoKick
-		{
-			public ESpamAction Mode;
-			public string      User;
-		}
-		public IntAutoKick AutoKick;
+		public CustomSettings Custom;
 
-		public IntTimeout Delay;
-		
-		// 3.2.2
-		public string ClearMsg;
-		public class IntWordFilter
-		{
-			public bool         Enabled, IgnoreMods;
-			public ESpamAction  Action;
-			public List<string> Filter;
-		}
-		public IntWordFilter WordFilter;
+		public AutoKickSettings AutoKick;
+
+		public DelaySettings Delay;
+
+		public WordFilterSettings WordFilter;
+
 		#endregion
-
-		// Create new default settings
-		public Settings(string chatRoomID)
+		
+		/// <summary>
+		/// Create new default settings
+		/// </summary>
+		/// <param name="chatRoomID"> Chatroom to create for </param>
+		public Settings(ulong chatRoomID)
 		{
-			// Should IDs be strings or ints?
+			Users    = new List<UserInfo>();
+			SetRules = new List<string>();
 
-			/*
-			 * Not implemented fields
-			 * InvitedID
-			 * InvitedName
-			 * Ver
-			 *
-			 */
+			Ver         = 6;	// Legacy is 5
+			DcLimit     = 5;
+			DcKickLimit = 3;	// Unused
+			DcBanLimit  = 5;	// Unused
+			AppNewsID   = 0;	// Unused
 
-			ChatName = "NoName";
-			ChatID   = chatRoomID;
-			Users = new List<UserInfo>();
-
-			Spam          = ESpamAction.Kick;
+			ChatName      = "NoName";
 			WelcomeMsg    = "Welcome";
 			WelcomeEnd    = "!";
-			LastPoke      = "NoPoke";			// Or maybe just null
-			DCKick        = ESpamAction.Kick;
+			InvitedName   = null;		// tempInvitedName
 			TranslateLang = "en";
+			ClearMsg      = ":3";
 
-			Cleverbot     = false;
-			CleverbotInst = false;
-			Translate     = false;
-			Commands      = true;
-			Welcome       = true;
+			ChatID    = chatRoomID;
+			InvitedID = 0;			// tempInvitedID
+			LastPoke  = 0;
 
+			Spam   = ESpamAction.Kick;
+			DcKick = ESpamAction.Kick;
+
+			Cleverbot   = false;
+			Translate   = false;
+			Commands    = true;
+			Welcome     = true;
 			Games       = true;
 			Define      = true;
 			Wiki        = true;
-			Search      = true;		// Removed in 2.0.2 (Readded later)
+			Search      = true;
 			Weather     = true;
 			Store       = true;
 			Responses   = true;
@@ -155,73 +206,19 @@ namespace dashe4
 			Poke        = true;
 			AllStates   = false;
 			AllPoke     = false;
-			NewApp      = false;	// Removed in 3.0
-			AutoWelcome = false;
+			NewApp      = false;	// Unused
+			AutoWelcome = false;	// Unused
+			Beta        = false;	// Unused
+			PostAnn     = false;	// Unused
+			FirstJoin   = true;		// Unused
+			Currency    = true;		// Unused
+			AutoLeave   = true;
 
-			// Are these even used?
-			// Use Delay.[rule] instead
-			DCLimit      = 5;
-			RandomDelay  = 120;
-			DefineDelay  = 300;
-			GamesDelay   = 120;
-			RecentsDelay = 120;
-			SearchDelay  = 120;
-			YTDelay      = 120;
-
-			// Version 1 (1.14.3)
-			IRC = false;
-
-			// Version 2 (2.0)
-			// All unused currently, except SetRules
-			SetRules    = new List<string>();
-			Beta        = false;
-			PostAnn     = false;
-			FirstJoin   = true;
-			DCKickLimit = 3;
-			DCBanLimit  = 5;
-			AppNewsID   = 0;
-			Currency    = true;
-
-			// Version 3 (2.0)
-			// To be used in 3.0
-			Timeout = new IntTimeout
-			{
-				Random  = 0,
-				Define  = 0,
-				Games   = 0,
-				Recents = 0,
-				Search  = 0,
-				YT      = 0
-			};
-
-			// Version 4 (2.0)
-			Custom = new IntCustom
-			{
-				Enabled  = false,
-				ModOnly  = false,
-				Delay    = 5,
-				Command  = "!custom",
-				Response = "Custom response"
-			};
-
-			// Version 5 (3.0)
-			AutoKick = new IntAutoKick
-			{
-				Mode = ESpamAction.None,
-				User = null
-			};
-
-			// Unused
-			// Use in 3.1 (4.0)
-			Delay = new IntTimeout
-			{
-				Random  = 120,
-				Define  = 300,
-				Games   = 120,
-				Recents = 120,
-				Search  = 120,
-				YT      = 120
-			};
+			Timeout    = new TimeoutSettings();
+			Custom     = new CustomSettings();
+			AutoKick   = new AutoKickSettings();
+			Delay      = new DelaySettings();
+			WordFilter = new WordFilterSettings();
 		}
 
 		// Save
@@ -231,11 +228,14 @@ namespace dashe4
 
 			// Serialise the object to json
 			var json = JsonConvert.SerializeObject(this, Formatting.Indented);
+
 			// Check if it failed
 			if (string.IsNullOrEmpty(json))
 				return false;
+
 			// Write to file if ok
-			File.WriteAllText("settings.json", json);
+			File.WriteAllText($"settings/{ChatID}.json", json);
+
 			return true;
 		}
 	}

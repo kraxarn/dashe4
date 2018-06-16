@@ -212,9 +212,9 @@ namespace dashe4
 
 				case ESpamAction.Warn:
 					var user = settings.Users.Single(u => u.SteamID == userID);
-					user.Warning++;
+					user.Warnings++;
 					user.LastTime = DateTime.Now;
-					var warns = user.Warning;
+					var warns = user.Warnings;
 					SendMessage(kraxbot.KraxID, $"Warned ({warns}) {kraxbot.GetFriendPersonaName(userID)} because of {reason} in {settings.ChatName}");
 
 					switch (warns)
@@ -229,7 +229,7 @@ namespace dashe4
 							else
 							{
 								SendMessage(chatRoomID, "Your own fault");
-								user.Warning = 0;
+								user.Warnings = 0;
 							}
 							kraxbot.KickUser(chatRoomID, userID);
 							break;
@@ -237,7 +237,7 @@ namespace dashe4
 						case 5:
 							SendMessage(chatRoomID, "Your own fault");
 							kraxbot.BanUser(chatRoomID, userID);
-							user.Warning = 0;
+							user.Warnings = 0;
 							break;
 
 						default:
@@ -328,10 +328,10 @@ namespace dashe4
 
 			// When someone chats, we want to reset disconnect
 			// TODO: In dashe3, we also do a check here if it exists
-			user.Disconnect = 0;
+			user.Disconnects = 0;
 
 			// Memes
-			if (user.SteamID.ConvertToUInt64() == 76561197988712393)
+			if (user.SteamID == 76561197988712393)
 			{
 				if (rng.Next(10) == 1)
 					message = DateTime.Now.ToShortTimeString();

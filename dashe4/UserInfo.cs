@@ -5,16 +5,20 @@ namespace dashe4
 {
 	public class UserInfo
 	{
-		public SteamID SteamID;
+		public string Name;
+
+		public ulong SteamID;
 
 		public EClanPermission Rank;
-
 		public EChatPermission Permission;
 
 		public DateTime LastTime;
-
 		public DateTime LastMessage;
+		public DateTime LastJoin;
+		public DateTime LastLeave;
 
-		public int Disconnect, Warning;
+		public int Disconnects;
+		public int Warnings;
+		public int SetWarnings;
 	}
 }
