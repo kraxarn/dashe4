@@ -650,6 +650,36 @@ namespace dashe4
 
 			#region Responses
 
+			if (settings.Responses)
+			{
+				if (message.Contains("dance"))
+					SendMessage(chatRoomID, "♫ ┌༼ຈل͜ຈ༽┘ ♪");
+				else if (message.Contains("<3") && message.Contains(" bot"))
+					SendMessage(chatRoomID, "<444444444");
+				else if (message.ToLower() == "back")
+					SendMessage(chatRoomID, "Welcome back");
+				else if (message.Contains(" love ") && message.Contains(" bot"))
+					SendMessage(chatRoomID, $"Thank you {userName}, I try my best <3");
+				else if (message.Contains(" hate ") && message.Contains(" bot"))
+					SendMessage(chatRoomID, ":c");
+				else if (message == "ECH")
+				{
+					var echs = new[]
+					{
+						"ECH", "ECH", "ECH", "IM SICK", "BLEUCH", "NYECH", "IGH", "EYCH", 
+						"JEC- CH", "AUGH", "EG", "DONT GGH AT ME", "GGGH", "GGGGGGGGH", "EUGH"
+					};
+					SendMessage(chatRoomID, echs[rng.Next(echs.Length)]);
+				}
+				else if (message.Contains(" bot") && rng.Next(100) < 5)
+					SendMessage(chatRoomID, "Beep beep boop");
+				else if (message == "!yes")
+				{
+					var words = new[] { "Yes", "yes", "No", "no", "Maybe", "idc", "YES", "NO" };
+					SendMessage(chatRoomID, words[rng.Next(words.Length)]);
+				}
+			}
+
 			#endregion
 	    }
 	}
