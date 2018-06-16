@@ -693,7 +693,33 @@ namespace dashe4
 
 			#endregion
 
+			#region Krax commands
 
+			if (userID == kraxbot.KraxID)
+			{
+				if (message == "!timeout")
+					SendMessage(chatRoomID, $"Current timeout value: {DateTime.Now}");
+				else if (message == "!info")
+				{
+					// TODO
+					SendMessage(chatRoomID, @"¯\_(ツ)_/¯");
+				}
+				else if (message.StartsWith("!permission "))
+				{
+					if (ulong.TryParse(message.Substring(12), out var search))
+					{
+						var found = settings.Users.SingleOrDefault(u => u.SteamID == search);
+
+						SendMessage(chatRoomID, found == default(UserInfo)
+							? "User not found"
+							: $"{found.Permission}");
+					}
+					else
+						SendMessage(chatRoomID, "Invalid SteamID");
+				}
+			}
+
+			#endregion
 	    }
 	}
 }
