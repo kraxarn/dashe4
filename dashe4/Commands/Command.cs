@@ -6,9 +6,11 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Web;
 using System.Xml;
-using Cleverbot.Net;
+using CleverbotIO.Net;
 using Newtonsoft.Json;
 using SteamKit2;
 
@@ -246,6 +248,56 @@ namespace dashe4
 					}
 
 					break;
+			}
+	    }
+
+	    private bool SearchUser(string keyword, List<UserInfo> users, out UserInfo user)
+	    {
+		    foreach (var u in users)
+		    {
+			    if (u.Name.ToLower().Contains(keyword.ToLower()) || keyword == $"{u.SteamID}")
+			    {
+				    user = u;
+				    return true;
+			    }
+		    }
+
+		    user = default(UserInfo);
+		    return false;
+	    }
+
+	    private void ToggleSetting(string setting, string name, Settings settings)
+	    {
+		    if (string.IsNullOrEmpty(name))
+			    name = setting;
+				
+			// TODO: We should prob test if property exists first
+		    if ((bool) settings[setting])
+		    {
+			    settings[setting] = false;
+				SendMessage(settings.ChatID, $"{name} is now disabled");
+		    }
+		    else
+		    {
+			    settings[setting] = true;
+			    SendMessage(settings.ChatID, $"{name} is now enabled");
+			}
+
+			// TODO: Save here
+		    //settings.Save();
+	    }
+
+	    private bool SetDelay(string delay, int time, Settings settings)
+	    {
+		    switch (delay)
+		    {
+				case "random":  settings.Delay.Random  = time; return true;
+			    case "define":  settings.Delay.Define  = time; return true;
+			    case "games":   settings.Delay.Games   = time; return true;
+			    case "recents": settings.Delay.Recents = time; return true;
+			    case "yt":      settings.Delay.Yt      = time; return true;
+
+				default: return false;
 			}
 	    }
 	    
@@ -716,6 +768,430 @@ namespace dashe4
 					}
 					else
 						SendMessage(chatRoomID, "Invalid SteamID");
+				}
+			}
+
+			#endregion
+
+			#region Admin commands
+
+			if (isMod)
+			{
+				// Deprecation warnings
+				if (message.StartsWith("!toggle spam"))
+					SendMessage(chatRoomID, "Command not found. Try '!set spam'");
+				else if (message.StartsWith("!toggle dc"))
+					SendMessage(chatRoomID, "Command not found. Try '!set dc'");
+
+				else if (message == "!clear")
+					SendMessage(chatRoomID, $"\n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n {settings.ClearMsg}");
+
+				else if (message.StartsWith("!warn "))
+				{
+					var search = message.Substring(6).ToLower();
+					if (SearchUser(search, settings.Users, out var found))
+					{
+						switch (found.Warnings)
+						{
+							case 0:  SendMessage(chatRoomID, $"{found.Name} doesn't have any warnings");     break;
+							case 1:  SendMessage(chatRoomID, $"{found.Name} has 1 warning");                 break;
+							default: SendMessage(chatRoomID, $"{found.Name} has {found.Warnings} warnings"); break;
+						}
+					}
+					else
+						SendMessage(chatRoomID, "User not found");
+				}
+
+				else if (message == "!nowarn")
+				{
+					user.Warnings = 0;
+					SendMessage(chatRoomID, "Warnings has been reset");
+				}
+
+				else if (message.StartsWith("!nowarn "))
+				{
+					var search = message.Substring(8);
+					if (SearchUser(search, settings.Users, out var found))
+					{
+						found.Warnings = 0;
+						SendMessage(chatRoomID, $"Warnings reset for {found.Name}");
+					}
+					else
+						SendMessage(chatRoomID, "User not found");
+				}
+
+				else if (message == "!chatusers")
+				{
+					SendMessage(chatRoomID, $"There has been {settings.Users.Count} users in this chat");
+				}
+
+				else if (message == "!nodelay")
+				{
+					settings.Timeout = new Settings.TimeoutSettings();
+					SendMessage(chatRoomID, "All delays reset");
+				}
+
+				else if (message.StartsWith("!toggle "))
+				{
+					var toggle = message.Substring(8);
+					switch (toggle)
+					{
+						case "cleverbot": ToggleSetting("Cleverbot", null, settings); break;
+						case "translate": ToggleSetting("Translate", null, settings); break;
+						case "commands":  ToggleSetting("Commands",  null, settings); break;
+						case "define":    ToggleSetting("Define",    null, settings); break;
+						case "weather":   ToggleSetting("Weather",   null, settings); break;
+						case "store":     ToggleSetting("Store",     null, settings); break;
+						case "responses": ToggleSetting("Responses", null, settings); break;
+						case "links":     ToggleSetting("Links",     null, settings); break;
+						case "rules":     ToggleSetting("Rules",     null, settings); break;
+						case "poke":      ToggleSetting("Poke",      null, settings); break;
+						case "wiki":      ToggleSetting("Wiki",      null, settings); break;
+
+						case "welcome":     ToggleSetting("Welcome",     "Welcome message",      settings); break;
+						case "games":       ToggleSetting("Games",       "Games and recents",    settings); break;
+						case "search":      ToggleSetting("Search",      "Search and YouTube",   settings); break;
+						case "newapp":      ToggleSetting("NewApp",      "New app notification", settings); break;
+						case "autowelcome": ToggleSetting("AutoWelcome", "Auto welcome message", settings); break;
+						case "allstates":   ToggleSetting("AllStates",   "All state changes",    settings); break;
+						case "allpoke":     ToggleSetting("AllPoke",     "All poke",             settings); break;
+
+						case "Custom":
+							settings.Custom.Enabled = !settings.Custom.Enabled;
+							SendMessage(chatRoomID, settings.Custom.Enabled 
+								? "Custom command is now enabled"
+								: "Custom command is now disabled");
+							break;
+
+						case "autoleave" when userID == kraxbot.KraxID:
+							ToggleSetting("AutoLeave", "Auto leave", settings);
+							break;
+
+						case "filter":
+							settings.WordFilter.Enabled = !settings.WordFilter.Enabled;
+							SendMessage(chatRoomID, settings.WordFilter.Enabled
+								? "Word filter is now enabled"
+								: "Word filter is now disabled");
+							break;
+
+						default:
+							SendMessage(chatRoomID, "Toggle not found");
+							break;
+
+						// TODO: Save settings here
+					}
+				}
+
+				else if (message.StartsWith("!setdelay "))
+				{
+					switch (msg.Length)
+					{
+						case 3 when int.TryParse(msg[2], out var delay):
+							if (delay < 3)
+								delay = 3;
+
+							// Check if handled in SetDelay()
+							if (SetDelay(msg[1], delay, settings))
+							{
+								SendMessage(chatRoomID, $"Delay of {msg[1]} has been set to {delay} seconds");
+								// TODO: Save settings here
+							}
+							else
+								SendMessage(chatRoomID, "Invalid parameter. Use random, define, games, recents or yt");
+
+							break;
+
+						case 3:
+							SendMessage(chatRoomID, "Delay is not a number");
+							break;
+
+						default:
+							SendMessage(chatRoomID, "Invalid amount of parameters");
+							break;
+					}
+				}
+
+				else if (message.StartsWith("!set "))
+				{
+					if (msg.Length == 3)
+					{
+						// TODO: Missing: lang
+						// TODO: This could be moved to a method, like SetDelay
+						if (msg[1] == "spam")
+						{
+							switch (msg[2])
+							{
+								case "ban":
+									settings.Spam = ESpamAction.Ban;
+									SendMessage(chatRoomID, "Spam will now ban");
+									break;
+
+								case "kick":
+									settings.Spam = ESpamAction.Kick;
+									SendMessage(chatRoomID, "Spam will now kick");
+									break;
+
+								case "warn":
+									settings.Spam = ESpamAction.Warn;
+									SendMessage(chatRoomID, "Spam will now warn. 3 warnings for kick (and 5 for ban when admin)");
+									break;
+
+								case "none":
+									settings.Spam = ESpamAction.None;
+									SendMessage(chatRoomID, "Spam will not be ignored");
+									break;
+
+								default:
+									SendMessage(chatRoomID, "Unknown spam toggle. Use ban, kick, warn or none");
+									break;
+							}
+						}
+						else if (msg[1] == "dc")
+						{
+							// TODO: We would set count here, like '!set dc count 3'
+							switch (msg[2])
+							{
+								case "kick":
+									settings.DcKick = ESpamAction.Kick;
+									SendMessage(chatRoomID, "Will now kick after 5 disconnections");
+									break;
+
+								case "warn":
+									settings.DcKick = ESpamAction.Warn;
+									SendMessage(chatRoomID, "Will now warn after 5 disconnections");
+									break;
+
+								case "none":
+									settings.DcKick = ESpamAction.None;
+									SendMessage(chatRoomID, "Will now ignore disconnections");
+									break;
+
+								default:
+									SendMessage(chatRoomID, "Unknown dc toggle. Use kick, warn or none");
+									break;
+							}
+						}
+						else if (msg[1] == "autoban" || msg[1] == "autokick")
+						{
+							var search = message.Substring(msg[1] == "autoban" ? 13 : 14);
+
+							if (search == "reset")
+							{
+								// Reset
+								settings.AutoKick.Mode = ESpamAction.None;
+								SendMessage(chatRoomID, "Auto kick/ban is now disabled");
+							}
+							else
+							{
+								if (SearchUser(search, settings.Users, out var found))
+								{
+									if (msg[1] == "autoban")
+									{
+										// Ban
+										settings.AutoKick.Mode = ESpamAction.Ban;
+										settings.AutoKick.User = found.SteamID;
+										SendMessage(chatRoomID, $"{found.Name} will now be banned next time they join");
+									}
+									else
+									{
+										// Kick
+										settings.AutoKick.Mode = ESpamAction.Kick;
+										settings.AutoKick.User = found.SteamID;
+										SendMessage(chatRoomID, $"{found.Name} will now be kicked next time they join");
+									}
+								}
+								else
+									SendMessage(chatRoomID, "No user found");
+							}
+						}
+						else if (msg[1] == "filter")
+						{
+							switch (msg[2])
+							{
+								case "kick":
+									settings.WordFilter.Action = ESpamAction.Kick;
+									SendMessage(chatRoomID, "Word filter will now kick");
+									break;
+
+								case "ban":
+									settings.WordFilter.Action = ESpamAction.Ban;
+									SendMessage(chatRoomID, "Word filter will now ban");
+									break;
+
+								case "warn":
+									settings.WordFilter.Action = ESpamAction.Warn;
+									SendMessage(chatRoomID, "Word filter will now warn");
+									break;
+
+								case "list":
+									SendMessage(chatRoomID, settings.WordFilter.Filter.Count > 0 
+										? $"Words in filter: {string.Join(" ", settings.WordFilter.Filter)}"
+										: "No words in filter to list");
+									break;
+
+								default:
+									// Used as add:word or rem:word
+									if (msg[2].StartsWith("add:"))
+									{
+										settings.WordFilter.Filter.Add(msg[2].Substring(4));
+										SendMessage(chatRoomID, "Word added to list");
+									}
+									else if (msg[2].StartsWith("rem:"))
+									{
+										var w = msg[2].Substring(4);
+
+										if (settings.WordFilter.Filter.Contains(w))
+										{
+											settings.WordFilter.Filter.Remove(w);
+											SendMessage(chatRoomID, "Word removed from list");
+										}
+										else
+											SendMessage(chatRoomID, "Word not found in list");
+									}
+									break;
+							}
+						}
+
+						// TODO: Save settings here
+					}
+					else
+						SendMessage(chatRoomID, "Invalid amount of parameters");
+				}
+
+				else if (message == "!load")
+				{
+					// TODO
+					SendMessage(chatRoomID, "Error loading settings");
+				}
+
+				else if (message == "!save")
+				{
+					// TODO
+					SendMessage(chatRoomID, "Error saving settings");
+				}
+
+				else if (message.StartsWith("!welcomemsg "))
+				{
+					var m = message.Substring(12);
+					settings.WelcomeMsg = m;
+					SendMessage(chatRoomID, $"Welcome message is now '{m} {userName} {settings.WelcomeEnd}'");
+				}
+
+				else if (message.StartsWith("!welcomeend "))
+				{
+					var m = message.Substring(12);
+					settings.WelcomeEnd = m;
+					SendMessage(chatRoomID, $"Welcome message is now '{settings.WelcomeMsg} {userName} {m}'");
+				}
+
+				else if (message.StartsWith("!clearmsg "))
+				{
+					var m = message.Substring(10);
+					settings.ClearMsg = m;
+					SendMessage(chatRoomID, "Clear message set");
+				}
+
+				else if (message.StartsWith("!count "))
+				{
+					var m = message.Substring(7);
+
+					if (int.TryParse(m, out var num))
+					{
+						// To count 0 as well
+						num++;
+
+						if (num >= 3 && num <= 20)
+						{
+							var i = 0;
+							Task.Run(() =>
+							{
+								while (i < num)
+								{
+									SendMessage(chatRoomID, $"{num - i}");
+									Thread.Sleep(1000);
+								}
+
+								SendMessage(chatRoomID, "Done!");
+							});
+						}
+						else
+							SendMessage(chatRoomID, "Choose a number between 3 and 20");
+					}
+					else
+						SendMessage(chatRoomID, "Not a number");
+				}
+
+				else if (message.StartsWith("!rule "))
+				{
+					if (msg.Length > 2)
+					{
+						switch (msg[1])
+						{
+							case "add":
+								settings.SetRules.Add(message.Substring(10));
+								SendMessage(chatRoomID, settings.Rules
+									? "Rule added"
+									: "Rule added (rules are disabled)");
+								break;
+
+							case "rm":
+							case "remove":
+								if (int.TryParse(msg[2], out var rule) && rule > 0)
+								{
+									// So rule 1 removes index 0
+									rule--;
+
+									if (settings.SetRules.Count >= rule)
+									{
+										settings.SetRules.RemoveAt(rule);
+										SendMessage(chatRoomID, settings.Rules
+											? "Rule removed"
+											: "Rule removed (rules are disabled)");
+									}
+									else
+										SendMessage(chatRoomID, "Rule not found");
+								}
+								else
+									SendMessage(chatRoomID, "Not a rule number");
+
+								break;
+
+							case "cls":
+							case "clear":
+								settings.SetRules.Clear();
+								SendMessage(chatRoomID, "Rules cleared");
+								break;
+
+							default:
+								SendMessage(chatRoomID, "Invalid argument. Use add, remove or clear");
+								break;
+						}
+
+						// TODO: Save settings
+					}
+					else
+						SendMessage(chatRoomID, "Invalid amount of arguments");
+				}
+
+				else if (message.StartsWith("!kick"))
+				{
+					if (SearchUser(message.Substring(6), settings.Users, out var found))
+						kraxbot.KickUser(chatRoomID, found.SteamID);
+				}
+
+				else if (message.StartsWith("!ban"))
+				{
+					if (SearchUser(message.Substring(5), settings.Users, out var found))
+						kraxbot.BanUser(chatRoomID, found.SteamID);
+				}
+
+				else if (message.StartsWith("!unban"))
+				{
+					if (SearchUser(message.Substring(5), settings.Users, out var found))
+					{
+						kraxbot.UnbanUser(chatRoomID, found.SteamID);
+						SendMessage(chatRoomID, $"Unbanned {found.Name}");
+					}
 				}
 			}
 

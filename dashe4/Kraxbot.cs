@@ -175,6 +175,8 @@ namespace dashe4
 
 	    public void BanUser(SteamID chatRoomID, SteamID userID) => friends.BanChatMember(chatRoomID, userID);
 
+	    public void UnbanUser(SteamID chatRoomID, SteamID userID) => friends.UnbanChatMember(chatRoomID, userID);
+
 	    public void LeaveChat(SteamID chatRoomID) => friends.LeaveChat(chatRoomID);
 
 		/// <summary>

@@ -160,6 +160,16 @@ namespace dashe4
 		public WordFilterSettings WordFilter;
 
 		#endregion
+
+		#region String properties
+
+		public object this[string propertyName]
+		{
+			get => GetType().GetProperty(propertyName).GetValue(this, null);
+			set => GetType().GetProperty(propertyName).SetValue(this, value, null);
+		}
+
+		#endregion
 		
 		/// <summary>
 		/// Create new default settings
