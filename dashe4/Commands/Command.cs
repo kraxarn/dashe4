@@ -306,6 +306,11 @@ namespace dashe4
 		public void Handle(SteamID chatRoomID, SteamID userID, string message)
 		{
 			/*
+			 * TODO
+			 * We could probably check msg[0] instead of message/message.StartsWith
+			 */
+
+			/*
 			 * Variable changes from dashe3:
 			 * chatter	-> user
 			 * name		-> userName

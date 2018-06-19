@@ -104,7 +104,27 @@ namespace dashe4
 
 		private void OnChatMemberInfo(SteamFriends.ChatMemberInfoCallback obj) => Kraxbot.Log("OnChatMemberInfo");
 
-		private void OnChatEnter(SteamFriends.ChatEnterCallback obj) => Kraxbot.Log("OnChatEnter");
+		private void OnChatEnter(SteamFriends.ChatEnterCallback callback)
+		{
+			var settings = kraxbot.GetChatRoomSettings(callback.ChatID);
+
+			// Fill settings with stuff
+			settings.ChatName = callback.ChatRoomName;
+
+			// Add users
+			foreach (var member in callback.ChatMembers)
+			{
+				settings.Users.Add(new UserInfo
+				{
+					Name       = kraxbot.GetFriendPersonaName(member.SteamID),
+					SteamID    = member.SteamID,
+					Rank       = member.Details,
+					Permission = member.Permissions
+				});
+			}
+
+			Kraxbot.Log($"Joined {callback.ChatRoomName} with invite from {settings.InvitedName}");
+		}
 
 		private void OnChatInvite(SteamFriends.ChatInviteCallback callback)
 		{
