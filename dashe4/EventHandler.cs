@@ -142,7 +142,13 @@ namespace dashe4
 
 		private void OnChatInvite(SteamFriends.ChatInviteCallback callback)
 		{
-			Kraxbot.Log("OnChatInvite");
+			var invitedName = kraxbot.GetFriendPersonaName(callback.FriendChatID);
+			Kraxbot.Log($"Got invite to {callback.ChatRoomName} from {invitedName}");
+
+			// Update values
+			var settings = kraxbot.GetChatRoomSettings(callback.ChatRoomID);
+			settings.InvitedID   = callback.FriendChatID;
+			settings.InvitedName = invitedName;
 			
 			kraxbot.JoinChatRoom(callback.ChatRoomID);
 		}
