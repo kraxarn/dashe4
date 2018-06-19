@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using SteamKit2;
 
@@ -114,13 +115,26 @@ namespace dashe4
 			// Add users
 			foreach (var member in callback.ChatMembers)
 			{
-				settings.Users.Add(new UserInfo
+				var user = settings.Users.SingleOrDefault(u => u.SteamID == member.SteamID);
+
+				if (user == default(UserInfo))
 				{
-					Name       = kraxbot.GetFriendPersonaName(member.SteamID),
-					SteamID    = member.SteamID,
-					Rank       = member.Details,
-					Permission = member.Permissions
-				});
+					// User doesn't exist, create
+					settings.Users.Add(new UserInfo
+					{
+						Name       = kraxbot.GetFriendPersonaName(member.SteamID),
+						SteamID    = member.SteamID,
+						Rank       = member.Details,
+						Permission = member.Permissions
+					});
+				}
+				else
+				{
+					// User already exists in list, just update values
+					user.Name       = kraxbot.GetFriendPersonaName(member.SteamID);
+					user.Rank       = member.Details;
+					user.Permission = member.Permissions;
+				}
 			}
 
 			Kraxbot.Log($"Joined {callback.ChatRoomName} with invite from {settings.InvitedName}");
