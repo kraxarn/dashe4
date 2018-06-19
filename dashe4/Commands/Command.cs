@@ -1102,9 +1102,6 @@ namespace dashe4
 
 					if (int.TryParse(m, out var num))
 					{
-						// To count 0 as well
-						num++;
-
 						if (num >= 3 && num <= 20)
 						{
 							var i = 0;
@@ -1113,6 +1110,7 @@ namespace dashe4
 								while (i < num)
 								{
 									SendMessage(chatRoomID, $"{num - i}");
+									i++;
 									Thread.Sleep(1000);
 								}
 
