@@ -161,12 +161,12 @@ namespace dashe4
 
 		#endregion
 
-		#region String properties
+		#region String fields
 
-		public object this[string propertyName]
+		public object this[string name]
 		{
-			get => GetType().GetProperty(propertyName).GetValue(this, null);
-			set => GetType().GetProperty(propertyName).SetValue(this, value, null);
+			get => GetType().GetField(name).GetValue(this);
+			set => GetType().GetField(name).SetValue(this, value);
 		}
 
 		#endregion
