@@ -789,7 +789,12 @@ namespace dashe4
 					}
 
 					// Get average load
-					var loadAvg = File.Exists("/proc/loadavg") ? File.ReadAllText("/proc/loadavg") : "unknown";
+					var loadAvg = "unknown";
+					if (File.Exists("/proc/loadavg"))
+					{
+						var all = File.ReadAllText("/proc/loadavg").Split(' ');
+						loadAvg = $"1m: {all[0]}, 5m: {all[1]}, 10m: {all[2]}";
+					}
 
 					// Get up time
 					var uptime = "unknown";
