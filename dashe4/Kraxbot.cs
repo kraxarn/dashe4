@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Text;
 using Newtonsoft.Json;
@@ -218,5 +218,39 @@ namespace dashe4
 	    }
 
 	    private void SaveSettingsToList(Settings settings) => chatrooms[settings.ChatID] = settings;
+
+	    public static string ExecuteProcess(string fileName, string arguments = null, int timeout = 3000)
+	    {
+			var startInfo = new ProcessStartInfo
+			{
+				UseShellExecute = false,
+				RedirectStandardOutput = true,
+				FileName = fileName
+			};
+
+		    if (arguments != null)
+			    startInfo.Arguments = arguments;
+
+		    var process = new Process
+		    {
+				StartInfo = startInfo
+		    };
+
+		    string output;
+
+		    try
+		    {
+			    process.Start();
+			    output = process.StandardOutput.ReadToEnd();
+			    process.WaitForExit(timeout);
+			}
+		    catch (Exception e)
+		    {
+				Log($"Failed to execute '{fileName}': {e.Message}");
+			    output = e.Message;
+		    }
+
+		    return output.Trim();
+	    }
     }
 }

@@ -758,8 +758,50 @@ namespace dashe4
 					SendMessage(chatRoomID, $"Current timeout value: {DateTime.Now}");
 				else if (message == "!info")
 				{
-					// TODO
-					SendMessage(chatRoomID, @"¯\_(ツ)_/¯");
+					/*
+					 * dashe3 output:
+					 * OS: os.type() os.release() os.arch()
+					 * CPU: os.cpus()[0].model
+					 * CPU load: os.loadavg()
+					 * Up time: Math.round((os.uptime() / 60) / 60) hours (/24 days)
+					 * Node version: process.version
+					 *
+					 * example output:
+					 * OS: Linux 4.12.14-lp150.12.4-default x64
+					 * CPU: Intel(R) Core(TM) i5-3570K CPU @ 3.40GHz
+					 * CPU load: 0.0068359375, 0.0107421875, 0
+					 * Up time: 24 hours (1 day)
+					 * Node version: v8.10.0
+					 *
+					 * dashe4 output:
+					 * OS: 'uname -sr'
+					 * CPU load: '/proc/loadavg'
+					 * Up time: '/proc/uptime[0]' ('/proc/uptime[1]' idle)
+					 * .NET Core: 'dotnet --version'
+					 */
+
+					// Get OS version
+					var osVer = Kraxbot.ExecuteProcess("uname", "-sr");
+
+					// Get average load
+					var loadAvg = File.Exists("/proc/loadavg") ? File.ReadAllText("/proc/loadavg") : "unknown";
+
+					// Get up time
+					var uptime = "unknown";
+					if (File.Exists("/proc/uptime"))
+					{
+						var all  = File.ReadAllText("/proc/uptime").Split(' ');
+						var time = new TimeSpan(0, 0, int.Parse(all[0]));
+						var idle = new TimeSpan(0, 0, int.Parse(all[1]));
+
+						uptime = $"{time} ({idle} idle)";
+					}
+
+					// Get .NET Core version
+					var dotnetVer = Kraxbot.ExecuteProcess("dotnet", "--version");
+
+					// Print
+					SendMessage(chatRoomID, $"\nOS: {osVer}\nCPU load: {loadAvg}\nUp time: {uptime}\n.NET Core: {dotnetVer}");
 				}
 				else if (message.StartsWith("!permission "))
 				{
