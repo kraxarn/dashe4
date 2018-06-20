@@ -781,7 +781,12 @@ namespace dashe4
 					 */
 
 					// Get OS version
-					var osVer = Kraxbot.ExecuteProcess("uname", "-sr");
+					var osVer = "unknown";
+					if (File.Exists("/proc/version"))
+					{
+						var all = File.ReadAllText("/proc/version").Split(' ');
+						osVer = $"{all[0]} {all[2]}";
+					}
 
 					// Get average load
 					var loadAvg = File.Exists("/proc/loadavg") ? File.ReadAllText("/proc/loadavg") : "unknown";
