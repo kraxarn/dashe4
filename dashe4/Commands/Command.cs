@@ -349,7 +349,7 @@ namespace dashe4
 				case EClanPermission.Owner:     userPermission = 'O'; break;	// Owner
 			}
 
-			Kraxbot.Log($"[C] [{settings.ChatName.Substring(0, 2)}] []");
+			Kraxbot.Log($"[C] [{settings.ChatName.Substring(0, 2)}] [{userPermission}] {userName}: {message}");
 
 			// Check if user has entry in settings.User (Should be created when joining
 			// TODO: This is sort of temp
