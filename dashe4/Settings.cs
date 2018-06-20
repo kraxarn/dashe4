@@ -165,8 +165,8 @@ namespace dashe4
 
 		public object this[string name]
 		{
-			get => GetType().GetField(name).GetValue(this);
-			set => GetType().GetField(name).SetValue(this, value);
+			get => GetType().GetField(name)?.GetValue(this);
+			set => GetType().GetField(name)?.SetValue(this, value);
 		}
 
 		#endregion
