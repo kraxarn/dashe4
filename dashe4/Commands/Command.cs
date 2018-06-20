@@ -321,6 +321,7 @@ namespace dashe4
 			#region Vars and stuff
 			
 			// Stuff used in various places
+			message = message.Trim();
 			var msg = message.Split(' ');
 
 			// Get settings
