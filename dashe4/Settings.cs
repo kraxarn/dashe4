@@ -18,11 +18,10 @@ namespace dashe4
 			public DateTime Random;
 			public DateTime Define;
 			public DateTime Games;
-			public DateTime Recents;
 			public DateTime Search;
 
 			public TimeoutSettings() 
-				=> Random = Define = Games = Recents = Search = DateTime.Now;
+				=> Random = Define = Games = Search = DateTime.Now;
 		}
 
 		public class CustomSettings
