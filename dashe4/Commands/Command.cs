@@ -12,6 +12,7 @@ using System.Web;
 using System.Xml;
 using CleverbotIO.Net;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using SteamKit2;
 
 namespace dashe4
@@ -53,9 +54,24 @@ namespace dashe4
 		    lastTime     = default(DateTime);
 	    }
 
+	    #region Classes
+
+	    private abstract class GameEntry
+	    {
+		    public int    appid;
+		    public string name;
+		    public int    playtime_forever;
+
+		    public string Playtime => $"{Math.Round(playtime_forever / 60f)}";
+	    }
+
+		#endregion
+	    
 	    #region Helpers
 
 	    private void SendMessage(SteamID chatRoomID, string message) => kraxbot.SendChatRoomMessage(chatRoomID, message);
+
+	    private void SendChatMessage(SteamID userID, string message) => kraxbot.SendChatMessage(userID, message);
 
 	    private bool TryGet(string url, out string response)
 	    {
@@ -300,6 +316,30 @@ namespace dashe4
 				default: return false;
 			}
 	    }
+
+	    private string FormatTime(TimeSpan time)
+		    => $"{time.TotalMinutes:00}:{time.Seconds:00}";
+
+	    private bool TryGetSpotifyToken(out string token)
+	    {
+		    token = null;
+
+			// TODO: Probably always the same
+		    var client = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{kraxbot.API.Spotify.ID}:{kraxbot.API.Spotify.Secret}"));
+
+		    var headers = new NameValueCollection
+		    {
+			    { "Authorization", $"Basic {client}" }
+		    };
+
+			if (TryRequest("https://accounts.spotify.com/api/token", headers, "{ grant_type: 'client_credentials' }", out var response))
+		    {
+			    if (TryParseJson(response, out var json))
+				    token = json.access_token;
+		    }
+
+		    return token != null;
+	    }
 	    
 	    #endregion
 
@@ -371,6 +411,10 @@ namespace dashe4
 					isMod = true;
 					break;
 			}
+
+			// Krax is always mod
+			if (user.SteamID == kraxbot.KraxID)
+				isMod = true;
 
 			// Check if bot is mod
 			var isBotMod = false;
@@ -1252,6 +1296,327 @@ namespace dashe4
 			}
 
 			#endregion
-	    }
+
+			#region Cooldown commands
+
+			if (settings.Commands || isMod)
+			{
+				if (message.StartsWith("!poke"))
+				{
+					if (settings.AllPoke || isMod)
+					{
+						if (SearchUser(message.Substring(6), settings.Users, out var found))
+						{
+							if (found.SteamID == settings.LastPoke)
+								SendMessage(chatRoomID, $"You have already poked {found.Name}");
+							else if (found.SteamID == kraxbot.KraxID || found.SteamID == kraxbot.SteamID)
+								SendMessage(chatRoomID, "Invalid target. Use !krax if you want to poke Kraxie");
+							else
+							{
+								SendChatMessage(found.SteamID, $"Hey you! {found.Name} poked you in {settings.ChatName}");
+								SendMessage(chatRoomID, $"Poked {found.Name}");
+								settings.LastPoke = found.SteamID;
+							}
+						}
+						else
+							SendMessage(chatRoomID, "No user found");
+					}
+				}
+
+				else if (message.StartsWith("!random "))
+				{
+					if (isMod || settings.Timeout.Random < DateTime.Now)
+					{
+						// TODO: Remake this to not take the same user twice?
+
+						// Don't select bot
+						// TODO: We may need to create a new list (prob not though?)
+						var users = settings.Users.Where(u => u.SteamID != kraxbot.SteamID).ToArray();
+						var random = users[rng.Next(users.Length)];
+
+						// Print it
+						SendMessage(chatRoomID, rng.Next(100) <= 5
+							? $"{random.Name} wins a free cookie"
+							: $"{random.Name} wins");
+
+						settings.Timeout.Random = DateTime.Now + TimeSpan.FromSeconds(settings.Delay.Random);
+					}
+					else
+						SendMessage(chatRoomID, $"This command is disabled for {FormatTime(settings.Timeout.Random - DateTime.Now)}");
+				}
+
+				else if (message == "!rangame")
+				{
+					if (TryGet($"http://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={kraxbot.API.Steam}&include_appinfo=1&include_played_free_games=1&steamid={userID}", out var response))
+					{
+						if (TryParseJson(response, out var json))
+						{
+							JArray games = json.response.games;
+							var ranGame  = json.response.games[rng.Next(games.Count)];
+
+							var gameID   = (int) ranGame.appid;
+							var gameName = (string) ranGame.name;
+							var gameTime = Math.Round((int) ranGame.playtime_forever / 60f);
+
+							if (gameTime <= 1)
+								SendMessage(chatRoomID, $"Why don't you try out {gameName}? You haven't played it yet. steam://install/{gameID}");
+							else if (gameTime <= 10)
+								SendMessage(chatRoomID, $"Why don't you try out {gameName}? You have only played it for {gameTime} hours. steam://install/{gameID}");
+							else
+								SendMessage(chatRoomID, $"Why don't you try out {gameName}? You have played it for {gameTime} hours though. steam://install/{gameID}");
+						}
+					}
+				}
+
+				else if (message == "!games")
+				{
+					if (isMod || settings.Timeout.Games < DateTime.Now)
+					{
+						if (TryGet($"http://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={kraxbot.API.Steam}&include_appinfo=1&include_played_free_games=1&steamid={userID}", out var response))
+						{
+							if (TryParseJson(response, out var json))
+							{
+								if (json.response.games != null)
+								{
+									// TODO: It's a very high risk this doesn't work
+
+									SendMessage(chatRoomID, $"You have {json.response.game_count} games");
+
+									GameEntry[] games = json.response.games;
+									games = games.OrderBy(g => g.playtime_forever).ToArray();
+
+									if (games.Length >= 5)
+									{
+										var gamestr = "";
+
+										for (var i = 0; i <= 5; i++)
+											gamestr += $"\n{i + 1}: {games[i].name} ({games[i].Playtime})";
+
+										SendMessage(chatRoomID, gamestr);
+									}
+									else
+										SendMessage(chatRoomID, "You don't have enough games to show most played");
+								}
+							}
+						}
+					}
+				}
+
+				else if (message == "!recents")
+				{
+					// TODO: Make this once !games is working correctly
+				}
+
+				else if (message.StartsWith("!define ") && (settings.Define || isMod))
+				{
+					if (isMod || settings.Timeout.Define < DateTime.Now)
+					{
+						if (TryGet($"http://api.urbandictionary.com/v0/define?term={message.Substring(8)}",
+							out var response))
+						{
+							if (TryParseJson(response, out var json))
+							{
+								if ((string) json.result_type == "no_results")
+									SendMessage(chatRoomID, "No results found");
+								else
+								{
+									var def = ((string) json.list[0].definition).Replace('\n', ' ');
+
+									SendMessage(chatRoomID, def.Length < 500
+										? $"{json.list[0].word} is {def}"
+										: $"{json.list[0].word} is {def.Substring(0, 500)}...");
+
+									if (isMod)
+									{
+										if (json.list[0].example != null)
+											SendMessage(chatRoomID,
+												$"Example: {((string) json.list[0].example).Replace('\n', ' ')}");
+
+										var likes = (int) json.list[0].thumbs_up;
+										var dislikes = (int) json.list[0].thumbs_down;
+										var total = likes + dislikes;
+
+										SendMessage(chatRoomID,
+											$"Rating: {(float) likes / total * 100}% positive ({likes}/{total})");
+									}
+								}
+							}
+						}
+
+						settings.Timeout.Define = DateTime.Now + TimeSpan.FromSeconds(settings.Delay.Define);
+					}
+					else
+						SendMessage(chatRoomID, $"This command is disabled for {FormatTime(settings.Timeout.Define - DateTime.Now)}");
+				}
+
+				else if (message.StartsWith("!wiki ") && (settings.Wiki || isMod))
+				{
+					if (isMod || settings.Timeout.Define < DateTime.Now)
+					{
+						// TODO: Post both defs in the same message
+
+						if (TryGet($"http://en.wikipedia.org/w/api.php?action=opensearch&format=json&search={message.Substring(6)}", out var response))
+						{
+							if (TryParseJson(response, out var json))
+							{
+								if (json[1][0] != null)
+								{
+									SendMessage(chatRoomID, $"{json[1][0]}: {json[2][0]}");
+
+									if (isMod && json[1][1])
+										SendMessage(chatRoomID, $"{json[1][1]}: {json[2][1]}");
+								}
+								else
+									SendMessage(chatRoomID, "No results found");
+							}
+						}
+
+						settings.Timeout.Define = DateTime.Now + TimeSpan.FromSeconds(settings.Delay.Define);
+					}
+					else
+						SendMessage(chatRoomID, $"This command is disabled for {FormatTime(settings.Timeout.Define - DateTime.Now)}");
+				}
+
+				else if (message.StartsWith("!yt ") && (settings.Search || isMod))
+				{
+					if (isMod || settings.Timeout.Search < DateTime.Now)
+					{
+						if (TryGet($"https://www.googleapis.com/youtube/v3/search?part=snippet&q={message.Substring(4)}&type=video&key={kraxbot.API.Google}", out var response))
+						{
+							if (TryParseJson(response, out var json))
+							{
+								if (json.items[0].snippet != null)
+								{
+									var max     = isMod ? 3 : 1;
+									var results = "";
+
+									for (var i = 0; i < max; i++)
+									{
+										if (json.items[i] != null)
+											results += $"\n{json.items[i].snippet.title} ({json.items[i].snippet.channelTitle}):  https://youtu.be/{json.items[i].videoId}";
+									}
+
+									SendMessage(chatRoomID, $"Results:{results}");
+								}
+								else
+									SendMessage(chatRoomID, "No results found");
+							}
+						}
+
+						settings.Timeout.Search = DateTime.Now + TimeSpan.FromSeconds(settings.Delay.Search);
+					}
+					else
+						SendMessage(chatRoomID, $"This command is disabled for {FormatTime(settings.Timeout.Search - DateTime.Now)}");
+				}
+
+				else if (message.StartsWith("!search ") && (settings.Search || isMod))
+				{
+					if (isMod || settings.Timeout.Search < DateTime.Now)
+					{
+						if (TryGet( $"https://www.googleapis.com/customsearch/v1?cx=004114719084244063804%3Ah7bxvwhveyw&key={kraxbot.API.Google}&q={message.Substring(8)}", out var response))
+						{
+							if (TryParseJson(response, out var json))
+							{
+								var max = isMod ? 3 : 1;
+
+								var info     = json.searchInformation;
+								JArray items = json.items;
+
+								if (items != null && items.Count >= max)
+								{
+									var results = $"Found {info.formattedTotalResults} results in {info.formattedSearchTime} seconds";
+
+									if (info.spelling != null)
+										results += $"\nDid you mean {json.spelling.correctedQuery}?";
+
+									for (var i = 0; i < max; i++)
+									{
+										if (items[i] != null)
+											results += $"\n{json.items[i].title}: {json.items[i].link}";
+									}
+
+									SendMessage(chatRoomID, results);
+								}
+								else
+									SendMessage(chatRoomID, "No results found");
+							}
+						}
+
+						settings.Timeout.Search = DateTime.Now + TimeSpan.FromSeconds(settings.Delay.Search);
+					}
+					else
+						SendMessage(chatRoomID, $"This command is disabled for {FormatTime(settings.Timeout.Search - DateTime.Now)}");
+				}
+
+				else if (message.StartsWith("!music ") && (settings.Search || isMod))
+				{
+					if (isMod || settings.Timeout.Search < DateTime.Now)
+					{
+						if (TryGetSpotifyToken(out var token))
+						{
+							var headers = new NameValueCollection
+							{
+								{ "Authorization", $"Bearer {token}" },
+								{ "Accept", "application/json" }
+							};
+
+							if (TryRequest($"https://api.spotify.com/v1/search?type=track,artist&limit=3&q={message.Substring(7)}", headers, null, out var response))
+							{
+								if (TryParseJson(response, out var json))
+								{
+									var max      = isMod ? 3 : 1;
+									JArray items = json.tracks.items;
+
+									if (items.Count >= max)
+									{
+										var results = $"Found {json.tracks.total} tracks";
+
+										for (var i = 0; i < max; i++)
+										{
+											var item = json.tracks.items[i];
+											results += $"\n{item.name} by {item.artists[0].name}: {item.external_urls.spotify}";
+										}
+
+										SendMessage(chatRoomID, results);
+									}
+
+								}
+								else
+									SendMessage(chatRoomID, "Bug found! (Failed to parse json)");
+							}
+							else
+								SendMessage(chatRoomID, "Bug found! (Failed to get response)");
+						}
+						else
+							SendMessage(chatRoomID, "Bug found! (Failed to get token)");
+
+						settings.Timeout.Search = DateTime.Now + TimeSpan.FromSeconds(settings.Delay.Search);
+					}
+					else
+						SendMessage(chatRoomID, $"This command is disabled for {FormatTime(settings.Timeout.Search - DateTime.Now)}");
+				}
+
+				else if (message.StartsWith("/r/") || message.StartsWith("!r "))
+				{
+					if (TryGet($"https://www.reddit.com/r/{message.Substring(3)}/about/.json?count=3&show=3", out var response))
+					{
+						if (TryParseJson(response, out var json))
+						{
+							// TODO: This may crash if there are less than 3 posts total
+							var results = "Top posts:";
+							for (var i = 0; i < 3; i++)
+							{
+								var item = json.data.children[i].data;
+								results += $"\n{i + 1}. {item.title} ({item.score / 1000f * 10}k): {item.url}";
+							}
+
+							SendMessage(chatRoomID, results);
+						}
+					}
+				}
+			}
+
+			#endregion
+		}
 	}
 }

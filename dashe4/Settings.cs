@@ -15,14 +15,14 @@ namespace dashe4
 
 		public class TimeoutSettings
 		{
-			public int Random;
-			public int Define;
-			public int Games;
-			public int Recents;
-			public int Yt;
+			public DateTime Random;
+			public DateTime Define;
+			public DateTime Games;
+			public DateTime Recents;
+			public DateTime Search;
 
 			public TimeoutSettings() 
-				=> Random = Define = Games = Recents = Yt = 0;
+				=> Random = Define = Games = Recents = Search = DateTime.Now;
 		}
 
 		public class CustomSettings
