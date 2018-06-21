@@ -147,6 +147,7 @@ namespace dashe4
 		public bool FirstJoin;
 		public bool Currency;
 		public bool AutoLeave;
+		public bool Discord;
 
 		public TimeoutSettings Timeout;
 
@@ -222,6 +223,7 @@ namespace dashe4
 			FirstJoin   = true;		// Unused
 			Currency    = true;		// Unused
 			AutoLeave   = true;
+			Discord     = false;	// Unused
 
 			Timeout    = new TimeoutSettings();
 			Custom     = new CustomSettings();
