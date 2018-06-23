@@ -56,13 +56,21 @@ namespace dashe4
 
 	    #region Classes
 
-	    private abstract class GameEntry
+	    private class GameEntry
 	    {
 		    public int    appid;
 		    public string name;
 		    public int    playtime_forever;
 
-		    public string Playtime => $"{Math.Round(playtime_forever / 60f)}";
+		    public string HoursPlayed => $"{Math.Round(playtime_forever / 60f)}";
+			
+		    [JsonConstructor]
+		    private GameEntry(int appid, string name, int playtime_forever)
+		    {
+			    this.appid = appid;
+			    this.name = name;
+			    this.playtime_forever = playtime_forever;
+		    }
 	    }
 
 		#endregion
@@ -75,7 +83,6 @@ namespace dashe4
 
 	    private bool TryGet(string url, out string response)
 	    {
-			Kraxbot.Log(url);
 		    try
 		    {
 			    response = web.DownloadString(url);
@@ -1385,31 +1392,28 @@ namespace dashe4
 				{
 					if (isMod || settings.Timeout.Games < DateTime.Now)
 					{
-						if (TryGet($"http://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={kraxbot.API.Steam}&include_appinfo=1&include_played_free_games=1&steamid={userID64}", out var response))
+						if (TryGetJson($"http://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={kraxbot.API.Steam}&include_appinfo=1&include_played_free_games=1&steamid={userID64}", out var json))
 						{
-							if (TryParseJson(response, out var json))
+							if (json.response.games != null)
 							{
-								if (json.response.games != null)
+								SendMessage(chatRoomID, $"You have {json.response.game_count} games");
+
+								var games = ((JArray) json.response.games).ToObject<List<GameEntry>>();
+
+								//games = games.OrderBy(g => g.playtime_forever).ToList();
+								games.Sort((a, b) => b.playtime_forever.CompareTo(a.playtime_forever));
+
+								if (games.Count >= 5)
 								{
-									// TODO: It's a very high risk this doesn't work
+									var gamestr = "";
 
-									SendMessage(chatRoomID, $"You have {json.response.game_count} games");
+									for (var i = 0; i < 5; i++)
+										gamestr += $"\n{i + 1}: {games[i].name} ({games[i].HoursPlayed} hours played)";
 
-									GameEntry[] games = json.response.games;
-									games = games.OrderBy(g => g.playtime_forever).ToArray();
-
-									if (games.Length >= 5)
-									{
-										var gamestr = "";
-
-										for (var i = 0; i <= 5; i++)
-											gamestr += $"\n{i + 1}: {games[i].name} ({games[i].Playtime})";
-
-										SendMessage(chatRoomID, gamestr);
-									}
-									else
-										SendMessage(chatRoomID, "You don't have enough games to show most played");
+									SendMessage(chatRoomID, gamestr);
 								}
+								else
+									SendMessage(chatRoomID, "You don't have enough games to show most played");
 							}
 						}
 					}
