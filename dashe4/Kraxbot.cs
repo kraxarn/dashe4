@@ -19,6 +19,8 @@ namespace dashe4
 	    private readonly SteamCommunity  community;
 	    private readonly CallbackManager manager;
 
+	    private readonly EventHandler eventHandler;
+
 	    private string version;
 
 	    private readonly Dictionary<ulong, Settings> chatrooms;
@@ -56,7 +58,7 @@ namespace dashe4
 			manager = new CallbackManager(client);
 			group   = new SteamGroup(client);
 
-			var events = new EventHandler(this);
+			eventHandler = new EventHandler(this);
 
 			KraxID = new SteamID(76561198024704964);
 
@@ -182,6 +184,9 @@ namespace dashe4
 
 		public SteamFriends.ProfileInfoCallback GetProfileInfo(SteamID userID) 
 			=> Task.Run(async () => await friends.RequestProfileInfo(userID)).Result;
+
+	    public bool TryGetFriendDetails(SteamID userID, out FriendDetails friend) 
+		    => eventHandler.TryGetFriendDetails(userID, out friend);
 
 		/// <summary>
 		/// Gets chatroom settings and adds them to chatroom list if needed
