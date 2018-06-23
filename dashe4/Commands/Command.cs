@@ -384,9 +384,6 @@ namespace dashe4
 
 			// TODO: This may not work if we aren't friends
 			var userName = kraxbot.GetFriendPersonaName(userID);
-
-			// TODO: Warning: This is actually just the state
-			var userGame = kraxbot.GetFriendPersonaState(userID);
 			
 			// Get one letter permission
 			// TODO: These may be inaccurate
