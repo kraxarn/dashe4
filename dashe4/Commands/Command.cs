@@ -71,7 +71,26 @@ namespace dashe4
 			    this.name = name;
 			    this.playtime_forever = playtime_forever;
 		    }
-	    }
+		}
+
+	    private class RecentGameEntry
+	    {
+		    public readonly int    AppID;
+		    public readonly string Name;
+		    public readonly int    PlayTimeRecently;
+		    public readonly int    PlayTime;
+
+		    public string HoursPlayedRecently => $"{Math.Round(PlayTimeRecently / 60f)}";
+
+		    [JsonConstructor]
+		    private RecentGameEntry(int appid, string name, int playtime_2weeks, int playtime_forever)
+		    {
+			    AppID = appid;
+			    Name = name;
+			    PlayTimeRecently = playtime_2weeks;
+			    PlayTime = playtime_forever;
+		    }
+		}
 
 		#endregion
 	    
@@ -359,6 +378,12 @@ namespace dashe4
 		    return token != null;
 	    }
 
+		/// <summary>
+		/// Gets all games a user owns (free and paid)
+		/// </summary>
+		/// <param name="userID"> SteamID64 of user </param>
+		/// <param name="sort"> Sort by total play time </param>
+		/// <returns></returns>
 	    private List<GameEntry> GetGamesForUser(ulong userID, bool sort = false)
 	    {
 		    if (TryGetJson($"http://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={kraxbot.API.Steam}&include_appinfo=1&include_played_free_games=1&steamid={userID}", out var json))
@@ -376,6 +401,30 @@ namespace dashe4
 
 		    return new List<GameEntry>();
 	    }
+
+		/// <summary>
+		/// Gets all games a user has recently played
+		/// </summary>
+		/// <param name="userID"> SteamID64 of user </param>
+		/// <param name="sort"> Sort by recent play time </param>
+		/// <returns></returns>
+	    private List<RecentGameEntry> GetRecentGamesForUser(ulong userID, bool sort = false)
+	    {
+		    if (TryGetJson($"http://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v1/?key={kraxbot.API.Steam}&steamid={userID}", out var json))
+		    {
+			    if (json.response.games != null)
+			    {
+				    var list = ((JArray)json.response.games).ToObject<List<RecentGameEntry>>();
+
+				    if (sort)
+					    list.Sort((a, b) => b.PlayTimeRecently.CompareTo(a.PlayTimeRecently));
+
+				    return list;
+			    }
+		    }
+
+		    return new List<RecentGameEntry>();
+		}
 	    
 	    #endregion
 
@@ -1434,7 +1483,30 @@ namespace dashe4
 
 				else if (message == "!recents")
 				{
-					// TODO: Make this once !games is working correctly
+					if (isMod || settings.Timeout.Games < DateTime.Now)
+					{
+						var games = GetRecentGamesForUser(userID64, true);
+						var max = games.Count;
+
+						if (max > 5)
+							max = 5;
+							
+						if (max > 0)
+						{
+							var gamestr = $"You have played {max} games recently";
+
+							for (var i = 0; i < max; i++)
+								gamestr += $"\n{i + 1}: {games[i].Name} ({games[i].HoursPlayedRecently} hours played recently)";
+
+							SendMessage(chatRoomID, gamestr);
+						}
+						else
+							SendMessage(chatRoomID, "You haven't played any games recently");
+
+						settings.Timeout.Games = DateTime.Now + TimeSpan.FromSeconds(settings.Delay.Random);
+					}
+					else
+						SendMessage(chatRoomID, $"This command is disabled for {FormatTime(settings.Timeout.Games - DateTime.Now)}");
 				}
 
 				else if (message.StartsWith("!define ") && (settings.Define || isMod))
