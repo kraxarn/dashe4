@@ -75,6 +75,7 @@ namespace dashe4
 
 	    private bool TryGet(string url, out string response)
 	    {
+			Kraxbot.Log(url);
 		    try
 		    {
 			    response = web.DownloadString(url);
@@ -384,6 +385,7 @@ namespace dashe4
 
 			// TODO: This may not work if we aren't friends
 			var userName = kraxbot.GetFriendPersonaName(userID);
+			var userID64 = userID.ConvertToUInt64();
 			
 			// Get one letter permission
 			// TODO: These may be inaccurate
@@ -1358,7 +1360,7 @@ namespace dashe4
 
 				else if (message == "!rangame")
 				{
-					if (TryGet($"http://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={kraxbot.API.Steam}&include_appinfo=1&include_played_free_games=1&steamid={userID}", out var response))
+					if (TryGet($"http://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={kraxbot.API.Steam}&include_appinfo=1&include_played_free_games=1&steamid={userID64}", out var response))
 					{
 						if (TryParseJson(response, out var json))
 						{
@@ -1383,7 +1385,7 @@ namespace dashe4
 				{
 					if (isMod || settings.Timeout.Games < DateTime.Now)
 					{
-						if (TryGet($"http://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={kraxbot.API.Steam}&include_appinfo=1&include_played_free_games=1&steamid={userID}", out var response))
+						if (TryGet($"http://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={kraxbot.API.Steam}&include_appinfo=1&include_played_free_games=1&steamid={userID64}", out var response))
 						{
 							if (TryParseJson(response, out var json))
 							{
