@@ -358,6 +358,24 @@ namespace dashe4
 
 		    return token != null;
 	    }
+
+	    private List<GameEntry> GetGamesForUser(ulong userID, bool sort = false)
+	    {
+		    if (TryGetJson($"http://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={kraxbot.API.Steam}&include_appinfo=1&include_played_free_games=1&steamid={userID}", out var json))
+		    {
+			    if (json.response.games != null)
+				{
+					var list = ((JArray) json.response.games).ToObject<List<GameEntry>>();
+
+					if (sort)
+						list.Sort((a, b) => b.playtime_forever.CompareTo(a.playtime_forever));
+
+					return list;
+				}
+			}
+
+		    return new List<GameEntry>();
+	    }
 	    
 	    #endregion
 
@@ -1392,30 +1410,21 @@ namespace dashe4
 				{
 					if (isMod || settings.Timeout.Games < DateTime.Now)
 					{
-						if (TryGetJson($"http://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={kraxbot.API.Steam}&include_appinfo=1&include_played_free_games=1&steamid={userID64}", out var json))
+						var games = GetGamesForUser(userID64, true);
+
+						SendMessage(chatRoomID, $"You have {games.Count} games");
+
+						if (games.Count >= 5)
 						{
-							if (json.response.games != null)
-							{
-								SendMessage(chatRoomID, $"You have {json.response.game_count} games");
+							var gamestr = "";
 
-								var games = ((JArray) json.response.games).ToObject<List<GameEntry>>();
+							for (var i = 0; i < 5; i++)
+								gamestr += $"\n{i + 1}: {games[i].name} ({games[i].HoursPlayed} hours played)";
 
-								//games = games.OrderBy(g => g.playtime_forever).ToList();
-								games.Sort((a, b) => b.playtime_forever.CompareTo(a.playtime_forever));
-
-								if (games.Count >= 5)
-								{
-									var gamestr = "";
-
-									for (var i = 0; i < 5; i++)
-										gamestr += $"\n{i + 1}: {games[i].name} ({games[i].HoursPlayed} hours played)";
-
-									SendMessage(chatRoomID, gamestr);
-								}
-								else
-									SendMessage(chatRoomID, "You don't have enough games to show most played");
-							}
+							SendMessage(chatRoomID, gamestr);
 						}
+						else
+							SendMessage(chatRoomID, "You don't have enough games to show most played");
 					}
 				}
 
