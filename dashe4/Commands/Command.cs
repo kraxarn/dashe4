@@ -1334,7 +1334,7 @@ namespace dashe4
 					}
 				}
 
-				else if (message.StartsWith("!random "))
+				else if (message == "!random")
 				{
 					if (isMod || settings.Timeout.Random < DateTime.Now)
 					{
