@@ -83,7 +83,7 @@ namespace dashe4
 		    catch (WebException e)
 		    {
 			    Kraxbot.Log($"Warning: Web request failed: {e.Message}");
-			    response = null;
+			    response = e.Message;
 			    return false;
 		    }
 
@@ -117,7 +117,7 @@ namespace dashe4
 		    catch (Exception e)
 		    {
 			    Kraxbot.Log($"Warning: Web request failed: {e.Message}");
-				response = null;
+				response = e.Message;
 			    return false;
 		    }
 	    }
