@@ -128,6 +128,16 @@ namespace dashe4
 		    return result != null;
 	    }
 
+	    private bool TryGetJson(string url, out dynamic json)
+	    {
+		    json = null;
+
+		    if (TryGet(url, out var response) && TryParseJson(response, out var result))
+			    json = result;
+
+		    return json != null;
+	    }
+
 	    private string GetImgurImage(string imageID)
 	    {
 		    var headers = new NameValueCollection
@@ -374,8 +384,10 @@ namespace dashe4
 
 			// TODO: This may not work if we aren't friends
 			var userName = kraxbot.GetFriendPersonaName(userID);
-			var userGame = kraxbot.GetFriendPersonaState(userID);
 
+			// TODO: Warning: This is actually just the state
+			var userGame = kraxbot.GetFriendPersonaState(userID);
+			
 			// Get one letter permission
 			// TODO: These may be inaccurate
 			var userPermission = '?';
@@ -801,6 +813,7 @@ namespace dashe4
 			{
 				if (message == "!timeout")
 					SendMessage(chatRoomID, $"Current timeout value: {DateTime.Now}");
+				
 				else if (message == "!info")
 				{
 					/*
@@ -858,6 +871,7 @@ namespace dashe4
 					// Print
 					SendMessage(chatRoomID, $"\nOS: {osVer}\nCPU load: {loadAvg}\nUp time: {uptime}\n.NET Core: {dotnetVer}");
 				}
+				
 				else if (message.StartsWith("!permission "))
 				{
 					if (ulong.TryParse(message.Substring(12), out var search))
@@ -1615,6 +1629,400 @@ namespace dashe4
 					}
 				}
 			}
+
+			#endregion
+
+			#region User commands
+
+			if (settings.Commands || isMod)
+			{
+				if (message.StartsWith("!rannum"))
+					SendMessage(chatRoomID, "Command not found. Did you mean '!roll'?");
+
+				else if (message == "!help")
+					SendMessage(chatRoomID, "Check https://web.kraxarn.com/bot/docs/ for how to use all commands");
+
+				else if (message == "!check")
+					SendMessage(chatRoomID, $"Settings for this chat can be found at https://web.kraxarn.com/bot/settings/?id={chatRoomID}");
+
+				else if (message == "!bday")
+				{
+					if (TryGet($"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={kraxbot.API.Steam}&steamids={userID}", out var response))
+					{
+						if (TryParseJson(response, out var json))
+						{
+							if (json.response.players[0].timecreated != null)
+							{
+								var date = new DateTime(1970, 1, 1).AddSeconds((double) json.response.players[0].timecreated);
+								var age  = DateTime.Now.Year - date.Year;
+
+								SendMessage(chatRoomID, age == 1
+									? $"{userName}'s cake day is {date} + (Account created {date.Year} and 1 year old"
+									: $"{userName}'s cake day is {date} + (Account created {date.Year} and {age} years old");
+							}
+						}
+					}
+				}
+
+				else if (message == "!users")
+				{
+					int guests, users, mods, admins;
+					guests = users = mods = admins = 0;
+					var owner = "no ";
+
+					foreach (var u in settings.Users)
+					{
+						switch (u.Rank)
+						{
+							case EClanPermission.Anybody: guests++; break;
+							case EClanPermission.Member:  users++;  break;
+							case EClanPermission.Moderator: mods++; break;
+							case EClanPermission.Officer: admins++; break;
+							case EClanPermission.Owner: owner = ""; break;
+						}
+					}
+
+					SendMessage(chatRoomID, $"{settings.Users.Count} people are currently in chat, where {guests} are guests, {users} are users, {mods} are mods, {admins} are admins and {owner}owner");
+				}
+
+				else if (message == "!afk")
+				{
+					// TODO: Check Users.InChat
+
+					var afks = 0;
+					
+					foreach (var u in settings.Users)
+					{
+						if (u.LastMessage <= DateTime.Now - TimeSpan.FromMinutes(30))
+							afks++;
+					}
+					
+					SendMessage(chatRoomID, $"{afks} out of {settings.Users} users are idle in the chat");
+				}
+
+				else if (message == "!invited")
+				{
+					var invitedName = string.IsNullOrEmpty(settings.InvitedName) ? "Unknown" : settings.InvitedName;
+					SendMessage(chatRoomID, $"{invitedName} invited me to this chat");
+				}
+
+				else if (message == "!servertime")
+				{
+					if (TryGetJson("http://api.steampowered.com/ISteamWebAPIUtil/GetServerInfo/v0001/", out var json))
+						SendMessage(chatRoomID, $"Current time on Steam's server is {json.servertimestring}");
+				}
+
+				else if (message == "!today")
+				{
+					var date = DateTime.Now;
+					if (TryGetJson($"http://numbersapi.com/{date.Month}/{date.Day}/date?json", out var json))
+						SendMessage(chatRoomID, json.text);
+				}
+
+				else if (message == "!nameof ")
+				{
+					if (int.TryParse(message.Substring(8), out var gameID))
+					{
+						// This can take a while, so we launch it in another thread
+						// TODO: We could cache the applist
+						Task.Run(() =>
+						{
+							var gameName = "";
+
+							if (TryGetJson("http://api.steampowered.com/ISteamApps/GetAppList/v2/", out var json))
+							{
+								foreach (var app in json.applist.apps)
+								{
+									if ((int) app.appid != gameID)
+										continue;
+
+									gameName = (string) app.name;
+									break;
+								}
+
+								SendMessage(chatRoomID, string.IsNullOrEmpty(gameName) 
+									? $"Nothing found for {gameID}" 
+									: $"Name for {gameID} is {gameName}");
+							}
+						});
+					}
+				}
+
+				else if (message == "!apps")
+				{
+					// TODO: Same as !nameof
+
+					Task.Run(() =>
+					{
+						if (TryGetJson("http://api.steampowered.com/ISteamApps/GetAppList/v2/", out var json))
+							SendMessage(chatRoomID, $"There are currently {((JArray) json.applist.apps).Count} games and apps on Steam");
+					});
+				}
+
+				else if (message == "!lastdown")
+				{
+					if (TryGetJson($"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={kraxbot.API.Steam}&steamids=76561198107682909", out var json))
+					{
+						var date = new DateTime(1970, 1, 1).AddSeconds((int) json.response.players[0].lastlogoff);
+						SendMessage(chatRoomID, $"Steam's last downtime was {date}");
+					}
+				}
+
+				else if (message.StartsWith("!rps "))
+				{
+					var num = rng.Next(3);
+					var sel = char.Parse(msg[1].Substring(0, 1));
+					var win = "Invalid selection. Use r, p, or s";
+
+					char bsel;
+					switch (num)
+					{
+						case 0:  bsel = 'r'; break;
+						case 1:  bsel = 'p'; break;
+						default: bsel = 's'; break;
+					}
+
+					switch (sel)
+					{
+						case 'r':
+							switch (bsel)
+							{
+								case 'r': win = "Rock: Tied! :)";       break;
+								case 'p': win = "Paper: I win! :D";     break;
+								case 's': win = "Scissor: You win! :/"; break;
+							}
+							break;
+
+						case 'p':
+							switch (bsel)
+							{
+								case 'r': win = "Rock: You win! :/";  break;
+								case 'p': win = "Paper: Tied! :)";    break;
+								case 's': win = "Scissor: I win! :D"; break;
+							}
+							break;
+
+						case 's':
+							switch (bsel)
+							{
+								case 'r': win = "Rock: I win! :D";   break;
+								case 'p': win = "Paper: You win :/"; break;
+								case 's': win = "Scissor: Tied! :)"; break;
+							}
+							break;
+					}
+
+					SendMessage(chatRoomID, win);
+				}
+
+				else if (message == "!name")
+				{
+					if (kraxbot.TryGetFriendDetails(userID, out var info) && !string.IsNullOrEmpty(info.GameName))
+					{
+						SendMessage(chatRoomID, Equals(info.GameServerIP, IPAddress.None)
+							? $"{userName} playing {info.GameName} ({user.Rank})"
+							: $"{userName} playing {info.GameName} on {info.GameServerIP} ({user.Rank})");
+					}
+					else
+						SendMessage(chatRoomID, $"{userName} ({user.Rank})");
+				}
+
+				else if (message == "!ver")
+					SendMessage(chatRoomID, $"KraxBot {kraxbot.Version} powered by .NET Core {Kraxbot.ExecuteProcess("dotnet", "--version")} by Kraxie / kraxarn");
+
+				else if (message == "!id")
+					SendMessage(chatRoomID, $"{userName}'s SteamID is {userID}");
+
+				else if (message == "!chatid")
+					SendMessage(chatRoomID, $"This chat's SteamID is {chatRoomID}");
+
+				else if (message.StartsWith("!8ball"))
+				{
+					var words = new[]
+					{
+						"It is certain", "It is decidedly so", "Without a doubt", 
+						"Yes definitely", "You may rely on it", "As I see it, yes", 
+						"Most likely", "Outlook good", "Yes", "Signs point to yes", 
+						"Reply hazy try again", "Ask again later", "Better not tell you now", 
+						"Cannot predict now", "Concentrate and ask again", "Do not count on it", 
+						"My reply is no", "My sources say no", "Outlook not so good", 
+						"Very doubtful"
+					};
+					SendMessage(chatRoomID, words[rng.Next(words.Length)]);
+				}
+
+				else if (message == "!time")
+					SendMessage(chatRoomID, $"{DateTime.Now.TimeOfDay}");
+
+				else if (message.StartsWith("!roll"))
+				{
+					if (msg.Length != 2 || !int.TryParse(msg[1], out var max))
+						max = 100;
+
+					SendMessage(chatRoomID, $"Your number is {rng.Next(max) + 1}");
+				}
+
+				else if (message == "!updated")
+				{
+					// TODO: Get the latest release from GitHub instead
+				}
+
+				else if (message == "!api")
+				{
+					if (TryParseJson($"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={kraxbot.API.Steam}&steamids={userID}", out var json))
+					{
+						// TODO: When does this fail?
+						if (!string.IsNullOrEmpty(json.response.players[0].personaname as string))
+						{
+							var info = json.response.players[0];
+							SendMessage(chatRoomID, $"[{info.loccountrycode}] {info.realname} / {info.personaname}");
+						}
+					}
+				}
+
+				else if (message.StartsWith("!math "))
+				{
+					if (TryGet($"http://api.mathjs.org/v1/?expr={Uri.EscapeDataString(message.Substring(6))}", out var response))
+					{
+						if (!response.StartsWith("Error") && !response.StartsWith("TimeoutError"))
+							SendMessage(chatRoomID, $"= {response}");
+					}
+				}
+
+				else if (message.StartsWith("!players "))
+				{
+					// BUG: This ignores what the user is playing
+
+					var search = message.Substring(9).ToLower();
+					
+					var gameName = "";
+					var gameID   = 0;
+
+					// TODO: This could also be cached
+					Task.Run(() =>
+					{
+						if (TryParseJson("http://api.steampowered.com/ISteamApps/GetAppList/v2", out var tempJson))
+						{
+							var applist = (JArray) tempJson.applist.apps;
+
+							foreach (dynamic app in applist)
+							{
+								var name = (string) app.name;
+								if (name.ToLower().Contains(search) && !name.Contains("Trailer") && !name.Contains("DLC"))
+								{
+									gameName = name;
+									gameID = (int) app.appid;
+									break;
+								}
+							}
+
+							if (gameID == 0)
+								SendMessage(chatRoomID, "No results found");
+							else
+							{
+								if (TryGetJson($"http://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid={gameID}", out var json))
+								{
+									SendMessage(chatRoomID, $"There are currently {json.response.player_count} people playing {gameName}");
+								}
+							}
+						}
+					});
+				}
+
+				else if (message.StartsWith("!weather ") && settings.Weather)
+				{
+					var search = message.Substring(9);
+
+					if (TryGetJson($"http://api.openweathermap.org/data/2.5/weather?units=metric&appid={kraxbot.API.OpenWeatherMap}&q={search}", out var json))
+					{
+						if (string.IsNullOrEmpty(json.messageas as string))
+						{
+							var updated = new DateTime(1970, 1, 1).AddSeconds((int) json.dt);
+							var time    = DateTime.Now - updated;
+
+							SendMessage(chatRoomID, $"The weather in {json.name} is {json.weather[0].main}, {Math.Round(json.main.temp)}ºC with wind at {Math.Round(json.wind.speed)} m/s and {json.clouds.all}% clouds (Updated {time} ago)");
+						}
+					}
+				}
+				
+				else if (message.StartsWith("!krax") && settings.Poke)
+				{
+					var send = message.Length > 6 ? message.Substring(6) : null;
+
+					var state = kraxbot.GetFriendPersonaState(kraxbot.KraxID);
+
+					switch (state)
+					{
+						case EPersonaState.Offline:
+							SendMessage(chatRoomID, "Sorry, she's offline right now");
+							break;
+
+						case EPersonaState.Busy:
+							SendMessage(chatRoomID, "Sorry, she's busy right now");
+							break;
+
+						case EPersonaState.Away when send == null:
+							SendMessage(chatRoomID, "She's away, but I poked her anyway");
+							SendChatMessage(kraxbot.KraxID, $"{userName} poked you in {settings.ChatName}");
+							break;
+
+						case EPersonaState.Away:
+							SendMessage(chatRoomID, "She's away, but I sent her your message anyway");
+							SendChatMessage(kraxbot.KraxID, $"{userName} poked you with '{send}' in {settings.ChatName}");
+							break;
+
+						case EPersonaState.Snooze when send == null:
+							SendMessage(chatRoomID, "She's on snooze, but I poked her anyway");
+							SendChatMessage(kraxbot.KraxID, $"{userName} poked you in {settings.ChatName}");
+							break;
+
+						case EPersonaState.Snooze:
+							SendMessage(chatRoomID, "She's on snooze, but I sent her your message anyway");
+							SendChatMessage(kraxbot.KraxID, $"{userName} poked you with '{send}' in {settings.ChatName}");
+							break;
+
+						default:
+							if (send == null)
+							{
+								SendMessage(chatRoomID, "Poked her");
+								SendChatMessage(kraxbot.KraxID, $"{userName} poked you in {settings.ChatName}");
+							}
+							else
+							{
+								SendMessage(chatRoomID, "Send her your message");
+								SendChatMessage(kraxbot.KraxID, $"{userName} poked you with '{send}' in {settings.ChatName}");
+							}
+							break;
+					}
+				}
+
+				else if (message == "!rules" && settings.Rules)
+				{
+					string rules;
+
+					if (settings.SetRules.Count > 0)
+					{
+						var i = 0;
+						rules = "Rules:";
+
+						foreach (var rule in settings.SetRules)
+							rules += $"\n{++i}. {rule}";
+					}
+					else
+						rules = "Default rules: \n1. No begging for stuff \n2. No spamming \n3. Use common sense \n4. The decisions of mods and admins are final \n5. Don't spam the bot's commands \n(You can change these with the !rule command)";
+
+					SendMessage(chatRoomID, rules);
+				}
+			}
+
+			#endregion
+
+			#region Update vars
+
+			lastMessage  = message;
+			lastUser     = userID;
+			lastChatroom = chatRoomID;
+			lastTime     = DateTime.Now;
 
 			#endregion
 		}

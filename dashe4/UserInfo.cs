@@ -20,5 +20,8 @@ namespace dashe4
 		public int Disconnects;
 		public int Warnings;
 		public int SetWarnings;
+
+		// TODO: USe this to determine if user is in chat
+		public bool InChat;
 	}
 }

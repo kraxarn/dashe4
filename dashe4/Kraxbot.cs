@@ -21,7 +21,7 @@ namespace dashe4
 
 	    private readonly EventHandler eventHandler;
 
-	    private string version;
+	    public readonly string Version;
 
 	    private readonly Dictionary<ulong, Settings> chatrooms;
 
@@ -44,7 +44,7 @@ namespace dashe4
 	    {
 			// Vars
 			// TODO: Get version from GitHub
-		    version   = "4.0.0-alpha.1";
+		    Version   = "4.0.0-alpha.1";
 			chatrooms = new Dictionary<ulong, Settings>();
 
 		    UniqueID = 0;
@@ -63,7 +63,7 @@ namespace dashe4
 			KraxID = new SteamID(76561198024704964);
 
 			// Welcome
-			Log($"Welcome to Kraxbot {version}");
+			Log($"Welcome to Kraxbot {Version}");
 		    client.Connect();
 
 			// SteamCommunity
