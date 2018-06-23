@@ -1425,7 +1425,11 @@ namespace dashe4
 						}
 						else
 							SendMessage(chatRoomID, "You don't have enough games to show most played");
+
+						settings.Timeout.Games = DateTime.Now + TimeSpan.FromSeconds(settings.Delay.Random);
 					}
+					else
+						SendMessage(chatRoomID, $"This command is disabled for {FormatTime(settings.Timeout.Games - DateTime.Now)}");
 				}
 
 				else if (message == "!recents")
