@@ -1,19 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using SteamKit2;
 
 namespace dashe4
 {
 	public class EventHandler
 	{
+		private enum UserEventType  { Message, Invite, Added }
+		private enum GroupEventType { Invite,  Joined        }
+
 		private readonly Kraxbot kraxbot;
 		private readonly Command cmnd;
 
 		private bool running;
 
 		private readonly Dictionary<SteamID, FriendDetails> friends;
+
+		private readonly Dictionary<SteamID, UserCooldowns>  users;
+		private readonly Dictionary<SteamID, GroupCooldowns> groups;
+
+		private SteamID tempInvitedID;
+		private string  tempInvitedName, tempChatName;
+
+		private SteamID lastChatroom, lastInviter;
 
 		public EventHandler(Kraxbot bot)
 		{
@@ -24,6 +37,8 @@ namespace dashe4
 			cmnd = new Command(bot);
 
 			friends = new Dictionary<SteamID, FriendDetails>();
+			users   = new Dictionary<SteamID, UserCooldowns>();
+			groups  = new Dictionary<SteamID, GroupCooldowns>();
 
 			manager.Subscribe<SteamClient.ConnectedCallback>(OnConnected);				// We connected
 			manager.Subscribe<SteamClient.DisconnectedCallback>(OnDisconnected);		// We got disconnected
@@ -64,6 +79,64 @@ namespace dashe4
 
 			friend = default(FriendDetails);
 			return false;
+		}
+
+		private void RegisterUserEvent(SteamID userID, UserEventType type)
+		{
+			if (users.ContainsKey(userID))
+			{
+				users[userID].Last = DateTime.Now;
+
+				switch (type)
+				{
+					case UserEventType.Message:
+						users[userID].LastMessage = DateTime.Now;
+						break;
+
+					case UserEventType.Invite:
+						users[userID].LastInvite = DateTime.Now;
+						break;
+
+					case UserEventType.Added:
+						users[userID].Added = DateTime.Now;
+						break;
+				}
+			}
+			else
+			{
+				// All cooldowns are set to now anyway
+				users[userID] = new UserCooldowns();
+			}
+
+			// Save users list
+			var json = JsonConvert.SerializeObject(users);
+			File.WriteAllText("./users.json", json);
+		}
+
+		private void RegisterGroupEvent(SteamID chatRoomID, GroupEventType type)
+		{
+			// Similar to RegisterUserEvent
+
+			if (groups.ContainsKey(chatRoomID))
+			{
+				switch (type)
+				{
+					case GroupEventType.Invite:
+						groups[chatRoomID].LastInvite = DateTime.Now;
+						break;
+
+					case GroupEventType.Joined:
+						groups[chatRoomID].Joined = DateTime.Now;
+						break;
+				}
+			}
+			else
+			{
+				groups[chatRoomID] = new GroupCooldowns();
+			}
+
+			var json = JsonConvert.SerializeObject(groups);
+			File.WriteAllText("./groups.json", json);
 		}
 
 		#endregion
@@ -155,15 +228,45 @@ namespace dashe4
 
 		private void OnChatInvite(SteamFriends.ChatInviteCallback callback)
 		{
-			var invitedName = kraxbot.GetFriendPersonaName(callback.FriendChatID);
-			Kraxbot.Log($"Got invite to {callback.ChatRoomName} from {invitedName}");
+			// TODO: Is this needed?
+			if (callback.InvitedID != kraxbot.SteamID)
+				return;
 
-			// Update values
-			var settings = kraxbot.GetChatRoomSettings(callback.ChatRoomID);
-			settings.InvitedID   = callback.FriendChatID;
-			settings.InvitedName = invitedName;
-			
-			kraxbot.JoinChatRoom(callback.ChatRoomID);
+			if (string.IsNullOrEmpty(callback.ChatRoomName))
+			{
+				kraxbot.SendChatMessage(callback.FriendChatID, "Sorry, I can't (currently) join multi-user chats");
+				return;
+			}
+
+			var userID   = callback.FriendChatID;
+			var userName = kraxbot.GetFriendPersonaName(callback.FriendChatID);
+
+			if (userID != kraxbot.KraxID && (callback.ChatRoomID == lastChatroom || userID == lastInviter))
+			{
+				Kraxbot.Log($"Got invite to {callback.ChatRoomName} from {userName}");
+				kraxbot.JoinChatRoom(callback.ChatRoomID);
+
+				// TODO: Are these used?
+				tempInvitedID   = userID;
+				tempInvitedName = userName;
+				tempChatName    = callback.ChatRoomName;
+
+				lastInviter = userID;
+
+				RegisterUserEvent(userID, UserEventType.Invite);
+				RegisterGroupEvent(callback.ChatRoomID, GroupEventType.Invite);
+
+				// Update names
+				var settings = kraxbot.GetChatRoomSettings(callback.ChatRoomID);
+				settings.InvitedID = callback.FriendChatID;
+				if (kraxbot.TryGetFriendDetails(userID, out var friend))
+					settings.InvitedName = friend.Name;
+			}
+			else
+			{
+				Kraxbot.Log($"Got invited to recent chat from {userName}, declined");
+				kraxbot.SendChatMessage(userID, "Sorry, I can't enter this chat. This is either because I recently left it or because you are spamming invites to chats.");
+			}
 		}
 
 		private void OnChatMsg(SteamFriends.ChatMsgCallback callback)
