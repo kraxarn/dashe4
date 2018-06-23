@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Text;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using SteamKit2;
 
@@ -179,12 +180,15 @@ namespace dashe4
 
 	    public void LeaveChat(SteamID chatRoomID) => friends.LeaveChat(chatRoomID);
 
+		public SteamFriends.ProfileInfoCallback GetProfileInfo(SteamID userID) 
+			=> Task.Run(async () => await friends.RequestProfileInfo(userID)).Result;
+
 		/// <summary>
 		/// Gets chatroom settings and adds them to chatroom list if needed
 		/// </summary>
-		// TODO: There could be a function that directly would return settings without check
+		// TODO: There could be a function that directly return settings without check
 		// This would be used in chat messages (to speed it up) and then use this on joins
-	    public Settings GetChatRoomSettings(SteamID chatRoomID)
+		public Settings GetChatRoomSettings(SteamID chatRoomID)
 	    {
 			// Shortcut
 		    var chatID = chatRoomID.ConvertToUInt64();
