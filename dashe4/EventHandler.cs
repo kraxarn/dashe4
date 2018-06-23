@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using SteamKit2;
@@ -12,6 +13,8 @@ namespace dashe4
 
 		private bool running;
 
+		private readonly Dictionary<SteamID, FriendDetails> friends;
+
 		public EventHandler(Kraxbot bot)
 		{
 			kraxbot = bot;
@@ -19,6 +22,8 @@ namespace dashe4
 			running = true;
 
 			cmnd = new Command(bot);
+
+			friends = new Dictionary<SteamID, FriendDetails>();
 
 			manager.Subscribe<SteamClient.ConnectedCallback>(OnConnected);				// We connected
 			manager.Subscribe<SteamClient.DisconnectedCallback>(OnDisconnected);		// We got disconnected
@@ -36,6 +41,7 @@ namespace dashe4
 			manager.Subscribe<SteamFriends.ChatEnterCallback>(OnChatEnter);				// We entered a chat
 			manager.Subscribe<SteamFriends.ChatMemberInfoCallback>(OnChatMemberInfo);	// A user has left or entered a chat
 			manager.Subscribe<SteamFriends.FriendsListCallback>(OnFriendsList);			// When we get our friends list
+			manager.Subscribe<SteamFriends.PersonaStateCallback>(OnPersonaState);		// Friend changes persona state
 
 			Task.Run(() =>
 			{
@@ -47,6 +53,18 @@ namespace dashe4
 		#region EventHandler methods
 
 		public void Stop() => running = false;
+
+		public bool TryGetFriendDetails(SteamID userID, out FriendDetails friend)
+		{
+			if (friends.ContainsKey(userID))
+			{
+				friend = friends[userID];
+				return true;
+			}
+
+			friend = default(FriendDetails);
+			return false;
+		}
 
 		#endregion
 
@@ -95,11 +113,6 @@ namespace dashe4
 
 		private void OnFriendsList(SteamFriends.FriendsListCallback callback)
 	    {
-		    foreach (var friend in callback.FriendList)
-		    {
-			    Kraxbot.Log($"{friend.SteamID}: {kraxbot.GetFriendPersonaName(friend.SteamID)}");
-		    }
-
 			kraxbot.JoinChatRoom(new SteamID(103582791438821937));
 	    }
 
@@ -167,6 +180,18 @@ namespace dashe4
 		}
 
 		private void OnFriendAdded(SteamFriends.FriendAddedCallback obj) => Kraxbot.Log("OnFriendAdded");
+
+		private void OnPersonaState(SteamFriends.PersonaStateCallback callback)
+		{
+			/*
+			 * If we already have the user saved, just update (all) values
+			 * Otherwise, create a new entry for them
+			 */
+			if (friends.ContainsKey(callback.FriendID))
+				friends[callback.FriendID].UpdateValues(callback);
+			else
+				friends[callback.FriendID] = new FriendDetails(callback);
+		}
 
 		#endregion
 	}
