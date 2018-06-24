@@ -150,6 +150,28 @@ namespace dashe4
 			return string.IsNullOrEmpty(name) ? "Unknown" : name;
 		}
 
+		private int GetPlayerLevel(ulong userID64)
+		{
+			var level = 0;
+			
+			/*
+			 * TODO
+			 * Like some other Steam Web API calls,
+			 * this can be called using the methods
+			 * provided by SteamKit2 instead of doing
+			 * it like this. Before that though, try
+			 * and make sure it works properly
+			 */
+
+			if (kraxbot.TryGetJson($"http://api.steampowered.com/IPlayerService/GetSteamLevel/v1/?key={kraxbot.API.Steam}&steamid={userID64}", out var json))
+			{
+				if (json.response.player_level != null)
+					level = (int) json.response.player_level;
+			}
+
+			return level;
+		}
+
 		#endregion
 
 		#region SteamClient
@@ -473,7 +495,33 @@ namespace dashe4
 			Kraxbot.Log($"{kraxbot.GetFriendPersonaName(callback.Sender)}: {callback.Message}");
 		}
 
-		private void OnFriendAdded(SteamFriends.FriendAddedCallback obj) => Kraxbot.Log("OnFriendAdded");
+		private void OnFriendAdded(SteamFriends.FriendAddedCallback callback)
+		{
+			// TODO: Does this only trigger once they have been added?
+
+			var userID = callback.SteamID;
+
+			if (GetPlayerLevel(userID) >= 10)
+			{
+				// Add user if level 10+
+				kraxbot.AddFriend(userID);
+
+				// TODO: Invite to group
+
+				kraxbot.SendChatMessage(userID, "Hi, I'm KraxBot! Nice to meet you :3");
+				kraxbot.SendChatMessage(userID, "You should add my creator if you haven't already, https://steamcommunity.com/id/kraxarn");
+				kraxbot.SendChatMessage(userID, "You should also consider joining the Steam group if you want news and updates about me!");
+
+				kraxbot.SendKraxMessage($"{callback.PersonaName} is now my friend");
+				RegisterUserEvent(userID, UserEventType.Added);
+			}
+			else
+			{
+				// Othewise, ignore invite
+				// TODO: Post comment
+				kraxbot.RemoveFriend(userID);
+			}
+		}
 
 		private void OnPersonaState(SteamFriends.PersonaStateCallback callback)
 		{

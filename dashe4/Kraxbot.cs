@@ -187,6 +187,10 @@ namespace dashe4
 
 	    public void LeaveChat(SteamID chatRoomID) => friends.LeaveChat(chatRoomID);
 
+	    public void AddFriend(SteamID userID) => friends.AddFriend(userID);
+
+	    public void RemoveFriend(SteamID userID) => friends.RemoveFriend(userID);
+
 		public SteamFriends.ProfileInfoCallback GetProfileInfo(SteamID userID) 
 			=> Task.Run(async () => await friends.RequestProfileInfo(userID)).Result;
 
