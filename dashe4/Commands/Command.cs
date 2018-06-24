@@ -125,8 +125,7 @@ namespace dashe4
 				    if (result.data.title != null)
 					    title = result.data.title;
 
-					var datetime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-				    datetime.AddSeconds((int)result.data.datetime);
+					var datetime = new DateTime(1970, 1, 1).AddSeconds((int) result.data.datetime);
 
 				    var views = regexSplit3.Replace(result.data.views.ToString(), "$0,");
 
