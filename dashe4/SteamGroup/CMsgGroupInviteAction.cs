@@ -1,16 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.IO;
 using SteamKit2;
 using SteamKit2.Internal;
 
 namespace dashe4
 {
-    class CMsgGroupInviteAction : ISteamSerializableMessage, ISteamSerializable
+    public class CMsgGroupInviteAction : ISteamSerializableMessage
     {
 		// Group invited to
 	    public ulong GroupID;
+
 		// To accept or decline invite
 	    public bool AcceptInvite;
 
