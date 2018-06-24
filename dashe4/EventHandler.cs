@@ -505,8 +505,7 @@ namespace dashe4
 			{
 				// Add user if level 10+
 				kraxbot.AddFriend(userID);
-
-				// TODO: Invite to group
+				kraxbot.InviteUserToGroup(userID, new SteamID(103582791438821937));
 
 				kraxbot.SendChatMessage(userID, "Hi, I'm KraxBot! Nice to meet you :3");
 				kraxbot.SendChatMessage(userID, "You should add my creator if you haven't already, https://steamcommunity.com/id/kraxarn");

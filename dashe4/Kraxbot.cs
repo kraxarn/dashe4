@@ -61,6 +61,9 @@ namespace dashe4
 			group   = new SteamGroup(client);
 			web     = new WebClient();
 
+			// TODO: ?
+		    // web.Headers.Add("Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0");
+
 			eventHandler = new EventHandler(this);
 
 			KraxID = new SteamID(76561198024704964);
@@ -190,6 +193,8 @@ namespace dashe4
 	    public void AddFriend(SteamID userID) => friends.AddFriend(userID);
 
 	    public void RemoveFriend(SteamID userID) => friends.RemoveFriend(userID);
+
+	    public void InviteUserToGroup(SteamID userID, SteamID groupID) => group.InviteUser(userID, groupID);
 
 		public SteamFriends.ProfileInfoCallback GetProfileInfo(SteamID userID) 
 			=> Task.Run(async () => await friends.RequestProfileInfo(userID)).Result;
