@@ -1,22 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using SteamKit2;
+﻿using SteamKit2;
 
 namespace dashe4
 {
-    class SteamGroup
+    public class SteamGroup
     {
 	    private readonly SteamClient client;
 
-	    public SteamGroup(SteamClient client)
-	    {
-		    this.client = client;
-	    }
+	    public SteamGroup(SteamClient client) => this.client = client;
 
 	    public void AcknowledgeInvite(SteamID groupID, bool accept)
 	    {
-		    var invite = new ClientMsg<CMsgGroupInviteAction>((int)EMsg.ClientAcknowledgeClanInvite);
+		    var invite = new ClientMsg<CMsgGroupInviteAction>((int) EMsg.ClientAcknowledgeClanInvite);
 
 		    invite.Body.GroupID = groupID.ConvertToUInt64();
 		    invite.Body.AcceptInvite = accept;
@@ -30,7 +24,7 @@ namespace dashe4
 
 		public void InviteUser(SteamID userID, SteamID groupID)
 	    {
-		    var user = new ClientMsg<CMsgInviteUserToGroup>((int)EMsg.ClientInviteUserToClan);
+		    var user = new ClientMsg<CMsgInviteUserToGroup>((int) EMsg.ClientInviteUserToClan);
 
 		    user.Body.GroupID = groupID.ConvertToUInt64();
 		    user.Body.Invitee = userID.ConvertToUInt64();

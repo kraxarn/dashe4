@@ -4,7 +4,7 @@ using SteamKit2.Internal;
 
 namespace dashe4
 {
-    class CMsgInviteUserToGroup : ISteamSerializableMessage
+    public class CMsgInviteUserToGroup : ISteamSerializableMessage
     {
 		// Who is being invited
 	    public ulong Invitee;
