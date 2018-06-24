@@ -15,6 +15,7 @@ namespace dashe4
 
 		private readonly Kraxbot kraxbot;
 		private readonly Command cmnd;
+		private readonly Random  rng;
 
 		private bool running;
 
@@ -35,6 +36,7 @@ namespace dashe4
 			running = true;
 
 			cmnd = new Command(bot);
+			rng  = new Random();
 
 			friends = new Dictionary<SteamID, FriendDetails>();
 			users   = new Dictionary<SteamID, UserCooldowns>();
@@ -139,6 +141,15 @@ namespace dashe4
 			File.WriteAllText("./groups.json", json);
 		}
 
+		private string GetPlayerName(SteamID userID)
+		{
+			// TODO: See how often 'Unknown' gets returned
+			// We could also use TryGetFriendDetails
+
+			var name = kraxbot.GetFriendPersonaName(userID);
+			return string.IsNullOrEmpty(name) ? "Unknown" : name;
+		}
+
 		#endregion
 
 		#region SteamClient
@@ -189,7 +200,187 @@ namespace dashe4
 			kraxbot.JoinChatRoom(new SteamID(103582791438821937));
 	    }
 
-		private void OnChatMemberInfo(SteamFriends.ChatMemberInfoCallback obj) => Kraxbot.Log("OnChatMemberInfo");
+		private void OnChatMemberInfo(SteamFriends.ChatMemberInfoCallback callback)
+		{
+			// TODO: We only care about state changes?
+			if (callback.Type != EChatInfoType.StateChange)
+				return;
+
+			// Some vars
+			var chatRoomID = callback.ChatRoomID;
+			var info       = callback.StateChangeInfo;
+			var state      = callback.StateChangeInfo.StateChange;
+
+			var settings = kraxbot.GetChatRoomSettings(chatRoomID);
+
+			var userID   = info.ChatterActedOn;
+			var userName = GetPlayerName(userID);
+
+			// TODO: Check for default properly
+			var user = settings.Users.SingleOrDefault(u => u.SteamID == userID);
+
+			// See what happened
+			string message;
+
+			switch (state)
+			{
+				case EChatMemberStateChange.Entered:      message = "Welcome";      break;	// Joined
+				case EChatMemberStateChange.Left:         message = "Good bye";     break;	// Left
+				case EChatMemberStateChange.Disconnected: message = "RIP";          break;	// Disconnected
+				case EChatMemberStateChange.Kicked:       message = "Bye";          break;	// Kicked
+				case EChatMemberStateChange.Banned:       message = "RIP in peace"; break;	// Banned
+
+				case EChatMemberStateChange.VoiceSpeaking:     message = "Joined voice chat: "; break;	// Joined voice chat
+				case EChatMemberStateChange.VoiceDoneSpeaking: message = "Left voice chat: ";   break;	// Left Voice chat
+
+				default:
+					message = $"Error ({state}):";
+					break;
+			}
+
+			// Check if applied to bot
+			if (userID == kraxbot.SteamID)
+			{
+				kraxbot.SendChatMessage(kraxbot.KraxID, $"Got {state} from {settings.ChatName}");
+				lastChatroom = chatRoomID;
+			}
+
+			// User entered chat
+			if (state == EChatMemberStateChange.Entered)
+			{
+				var member = callback.StateChangeInfo.MemberInfo;
+
+				if (user == default(UserInfo))
+				{
+					// User doesn't exist, create
+					settings.Users.Add(new UserInfo
+					{
+						Name       = GetPlayerName(userID),
+						SteamID    = userID,
+						Rank       = member.Details,
+						Permission = member.Permissions
+					});
+				}
+				else
+				{
+					// User already exists in list, just update values
+					user.Name       = kraxbot.GetFriendPersonaName(userID);
+					user.Rank       = member.Details;
+					user.Permission = member.Permissions;
+				}
+			}
+
+			// User left chat
+			else if (state == EChatMemberStateChange.Left)
+			{
+				user.Disconnects = 0;
+				user.LastLeave   = DateTime.Now;
+			}
+
+			// Fix for not counting Disconnects when DCKick is set to 'None'
+			// When it's 2 it won't say anything anyway
+			else if (state == EChatMemberStateChange.Disconnected && settings.DcKick == ESpamAction.None && user.Disconnects < 2)
+				user.Disconnects++;
+
+			// Check if we should auto kick/ban
+			if (settings.AutoKick.Mode != ESpamAction.None && settings.AutoKick.User == userID)
+			{
+				switch (settings.AutoKick.Mode)
+				{
+					case ESpamAction.Ban:
+						kraxbot.BanUser(chatRoomID, userID);
+						kraxbot.SendChatMessage(kraxbot.KraxID, $"Auto banned {userName} from {settings.ChatName}");
+						break;
+
+					case ESpamAction.Kick:
+						kraxbot.KickUser(chatRoomID, userID);
+						kraxbot.SendChatMessage(kraxbot.KraxID, $"Auto kicked {userName} from {settings.ChatName}");
+						break;
+
+					// TODO: Add warning
+				}
+			}
+
+			// Say welcome message
+			if (settings.Welcome)
+			{
+				if (state == EChatMemberStateChange.Entered)
+				{
+					switch (user.Disconnects)
+					{
+						case 0:
+							kraxbot.SendChatRoomMessage(chatRoomID, $"{settings.WelcomeMsg} {userName} {settings.WelcomeEnd}");
+							break;
+
+						case 1:
+							kraxbot.SendChatRoomMessage(chatRoomID, $"Welcome back {userName}");
+							break;
+					}
+				}
+				else if (settings.AllStates && user.Disconnects == 0)
+					kraxbot.SendChatRoomMessage(chatRoomID, $"{message} {userName}");
+			}
+
+			// Kick or warn user if disconnected enough times
+			if (settings.DcKick != ESpamAction.None)
+			{
+				// If user disconnected, add to counter
+				if (state == EChatMemberStateChange.Disconnected)
+					user.Disconnects++;
+
+				// Check disconnects and kick/warn
+				// TODO: Make so you can set custom amount
+				if (state == EChatMemberStateChange.Entered && user.Disconnects >= 5)
+				{
+					kraxbot.SendChatRoomMessage(chatRoomID, $"{userName}, please fix your connection");
+
+					if (settings.DcKick == ESpamAction.Kick)
+					{
+						kraxbot.SendKraxMessage($"Kicked {userName} due to disconnecting in {settings.ChatName}");
+						kraxbot.KickUser(chatRoomID, userID);
+					}
+					else if (settings.DcKick == ESpamAction.Warn)
+					{
+						// TODO: This could probably just be a method
+						// TODO: We also set .Last in dashe3, why?
+						user.Warnings++;
+						
+						if (user.Warnings == 1)
+							kraxbot.SendChatRoomMessage(chatRoomID, "This is your first warning");
+						else if (user.Warnings > 2)
+						{
+							kraxbot.SendChatRoomMessage(chatRoomID, rng.Next(10) == 0 ? "That's it >:c" : "Your own fault :/");
+							user.Warnings = 0;
+							kraxbot.KickUser(chatRoomID, userID);
+						}
+						else
+						{
+							kraxbot.SendChatRoomMessage(chatRoomID, $"You currently have {user.Warnings} warnings");
+						}
+					}
+
+					user.Disconnects = 0;
+				}
+			}
+
+			// Log state message
+			Kraxbot.Log($"[C] [{settings.ChatName}] {message} {userName}");
+			
+			/*
+			 * TODO
+			 * We used to have a bot check here in dashe3,
+			 * but since all those bots have died (xD),
+			 * I don't think we need the check anymore
+			 */
+
+			// Check if inviter left
+			if (userID == settings.InvitedID && settings.AutoLeave && state == EChatMemberStateChange.Left)
+			{
+				kraxbot.SendChatRoomMessage(chatRoomID, "Cya!");
+				kraxbot.SendKraxMessage($"Left {settings.ChatName} because {userName} left the chat");
+				kraxbot.LeaveChat(chatRoomID);
+			}
+		}
 
 		private void OnChatEnter(SteamFriends.ChatEnterCallback callback)
 		{

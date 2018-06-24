@@ -172,6 +172,8 @@ namespace dashe4
 	    public void SendChatRoomMessage(SteamID chatRoomID, string message) =>
 		    friends.SendChatRoomMessage(chatRoomID, EChatEntryType.ChatMsg, message);
 
+	    public void SendKraxMessage(string message) => SendChatMessage(KraxID, message);
+
 	    public void JoinChatRoom(SteamID chatRoomID) => friends.JoinChat(chatRoomID);
 
 	    public void KickUser(SteamID chatRoomID, SteamID userID) => friends.KickChatMember(chatRoomID, userID);
