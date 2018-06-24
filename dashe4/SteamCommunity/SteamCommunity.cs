@@ -1,17 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Text;
-using System.Threading;
 using System.Web;
 using SteamKit2;
 
 namespace dashe4
 {
-    class SteamCommunity
+    public class SteamCommunity
     {
 	    public CookieContainer Cookies { get; }
-	    private SteamClient client;
+
+	    private readonly SteamClient client;
 
 		public string SessionID        { get; private set; }
 	    public string SteamLogin       { get; private set; }
@@ -37,8 +36,6 @@ namespace dashe4
 		    if (uniqueID == null || loginKey == null)
 			    return false;
 
-		    var token = "";
-		    var tokenSecure = "";
 		    var sessionID = Convert.ToBase64String(Encoding.UTF8.GetBytes(uniqueID));
 
 		    using (dynamic auth = WebAPI.GetInterface("ISteamUserAuth"))
@@ -72,13 +69,12 @@ namespace dashe4
 			    }
 			    catch (Exception e)
 			    {
-				    token = tokenSecure = null;
-					Kraxbot.Log($"Warning: Failed to authenticate: {e.Message}");
+				    Kraxbot.Log($"Warning: Failed to authenticate: {e.Message}");
 				    return false;
 			    }
 
-			    token = authResult["token"].AsString();
-			    tokenSecure = authResult["tokensecure"].AsString();
+			    var token       = authResult["token"].AsString();
+			    var tokenSecure = authResult["tokensecure"].AsString();
 
 				// Add cookies
 				Cookies.Add(new Cookie("sessionid",        sessionID,   string.Empty, "steamcommunity.com"));
