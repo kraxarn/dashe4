@@ -17,11 +17,9 @@ using SteamKit2;
 
 namespace dashe4
 {
-    class Command
+    public class Command
     {
 	    private readonly Kraxbot kraxbot;
-
-	    private readonly WebClient web;
 
 	    private readonly Regex regexSplit3;
 
@@ -41,9 +39,6 @@ namespace dashe4
 
 		    regexSplit3 = new Regex(".{3}");
 
-			web = new WebClient();
-			//web.Headers.Add("Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0");
-
 			rng = new Random();
 
 			cleverbots = new Dictionary<SteamID, CleverbotSession>();
@@ -58,7 +53,6 @@ namespace dashe4
 
 	    private class GameEntry
 	    {
-		    public int    appid;
 		    public string name;
 		    public int    playtime_forever;
 
@@ -67,7 +61,6 @@ namespace dashe4
 		    [JsonConstructor]
 		    private GameEntry(int appid, string name, int playtime_forever)
 		    {
-			    this.appid = appid;
 			    this.name = name;
 			    this.playtime_forever = playtime_forever;
 		    }
@@ -75,20 +68,16 @@ namespace dashe4
 
 	    private class RecentGameEntry
 	    {
-		    public readonly int    AppID;
 		    public readonly string Name;
 		    public readonly int    PlayTimeRecently;
-		    public readonly int    PlayTime;
 
 		    public string HoursPlayedRecently => $"{Math.Round(PlayTimeRecently / 60f)}";
 
 		    [JsonConstructor]
 		    private RecentGameEntry(int appid, string name, int playtime_2weeks, int playtime_forever)
 		    {
-			    AppID = appid;
 			    Name = name;
 			    PlayTimeRecently = playtime_2weeks;
-			    PlayTime = playtime_forever;
 		    }
 		}
 
