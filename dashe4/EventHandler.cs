@@ -24,9 +24,6 @@ namespace dashe4
 		private readonly Dictionary<SteamID, UserCooldowns>  users;
 		private readonly Dictionary<SteamID, GroupCooldowns> groups;
 
-		private SteamID tempInvitedID;
-		private string  tempInvitedName, tempChatName;
-
 		private SteamID lastChatroom, lastInviter;
 
 		public EventHandler(Kraxbot bot)
@@ -458,11 +455,6 @@ namespace dashe4
 			{
 				Kraxbot.Log($"Got invite to {callback.ChatRoomName} from {userName}");
 				kraxbot.JoinChatRoom(callback.ChatRoomID);
-
-				// TODO: Are these used?
-				tempInvitedID   = userID;
-				tempInvitedName = userName;
-				tempChatName    = callback.ChatRoomName;
 
 				lastInviter = userID;
 
