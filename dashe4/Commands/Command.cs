@@ -101,69 +101,16 @@ namespace dashe4
 	    private void SendChatMessage(SteamID userID, string message) => kraxbot.SendChatMessage(userID, message);
 
 	    private bool TryGet(string url, out string response)
-	    {
-		    try
-		    {
-			    response = web.DownloadString(url);
-			    return true;
-		    }
-		    catch (WebException e)
-		    {
-			    Kraxbot.Log($"Warning: Web request failed: {e.Message}");
-			    response = e.Message;
-			    return false;
-		    }
-
-	    }
+		    => kraxbot.TryGet(url, out response);
 
 	    private bool TryRequest(string url, NameValueCollection headers, string body, out string response)
-	    {
-			var webRequest  = (HttpWebRequest) WebRequest.Create(url);
-		    webRequest.Headers.Add(headers);
-		    webRequest.ContentType = "application/json";
-
-			// See if we have a body
-		    if (body != null)
-		    {
-			    var postData = $"body={body}";
-			    var bytes = Encoding.UTF8.GetBytes(postData);
-			    webRequest.Method = "POST";
-			    webRequest.ContentType = "application/x-www-form-urlencoded";
-			    webRequest.ContentLength = bytes.Length;
-			    var stream = webRequest.GetRequestStream();
-				stream.Write(bytes, 0, bytes.Length);
-				stream.Close();
-		    }
-
-		    try
-		    {
-			    var webResponse = (HttpWebResponse) webRequest.GetResponse();
-			    response = new StreamReader(webResponse.GetResponseStream()).ReadToEnd();
-			    return true;
-		    }
-		    catch (Exception e)
-		    {
-			    Kraxbot.Log($"Warning: Web request failed: {e.Message}");
-				response = e.Message;
-			    return false;
-		    }
-	    }
+		    => kraxbot.TryRequest(url, headers, body, out response);
 
 	    private bool TryParseJson(string value, out dynamic result)
-	    {
-		    result = JsonConvert.DeserializeObject(value);
-		    return result != null;
-	    }
+		    => kraxbot.TryParseJson(value, out result);
 
 	    private bool TryGetJson(string url, out dynamic json)
-	    {
-		    json = null;
-
-		    if (TryGet(url, out var response) && TryParseJson(response, out var result))
-			    json = result;
-
-		    return json != null;
-	    }
+		    => kraxbot.TryGetJson(url, out json);
 
 	    private string GetImgurImage(string imageID)
 	    {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
@@ -20,6 +21,7 @@ namespace dashe4
 	    private readonly CallbackManager manager;
 
 	    private readonly EventHandler eventHandler;
+	    private readonly WebClient    web;
 
 	    public readonly string Version;
 
@@ -57,6 +59,7 @@ namespace dashe4
 			friends = client.GetHandler<SteamFriends>();
 			manager = new CallbackManager(client);
 			group   = new SteamGroup(client);
+			web     = new WebClient();
 
 			eventHandler = new EventHandler(this);
 
@@ -263,5 +266,70 @@ namespace dashe4
 
 		    return output.Trim();
 	    }
-    }
+
+	    public bool TryGet(string url, out string response)
+	    {
+		    try
+		    {
+			    response = web.DownloadString(url);
+			    return true;
+		    }
+		    catch (WebException e)
+		    {
+			    Log($"Warning: Web request failed: {e.Message}");
+			    response = e.Message;
+			    return false;
+		    }
+
+	    }
+
+	    public bool TryRequest(string url, NameValueCollection headers, string body, out string response)
+	    {
+		    var webRequest = (HttpWebRequest)WebRequest.Create(url);
+		    webRequest.Headers.Add(headers);
+		    webRequest.ContentType = "application/json";
+
+		    // See if we have a body
+		    if (body != null)
+		    {
+			    var postData = $"body={body}";
+			    var bytes = Encoding.UTF8.GetBytes(postData);
+			    webRequest.Method = "POST";
+			    webRequest.ContentType = "application/x-www-form-urlencoded";
+			    webRequest.ContentLength = bytes.Length;
+			    var stream = webRequest.GetRequestStream();
+			    stream.Write(bytes, 0, bytes.Length);
+			    stream.Close();
+		    }
+
+		    try
+		    {
+			    var webResponse = (HttpWebResponse)webRequest.GetResponse();
+			    response = new StreamReader(webResponse.GetResponseStream()).ReadToEnd();
+			    return true;
+		    }
+		    catch (Exception e)
+		    {
+			    Log($"Warning: Web request failed: {e.Message}");
+			    response = e.Message;
+			    return false;
+		    }
+	    }
+
+	    public bool TryParseJson(string value, out dynamic result)
+	    {
+		    result = JsonConvert.DeserializeObject(value);
+		    return result != null;
+	    }
+
+	    public bool TryGetJson(string url, out dynamic json)
+	    {
+		    json = null;
+
+		    if (TryGet(url, out var response) && TryParseJson(response, out var result))
+			    json = result;
+
+		    return json != null;
+	    }
+	}
 }
