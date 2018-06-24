@@ -241,7 +241,7 @@ namespace dashe4
 			// Check if applied to bot
 			if (userID == kraxbot.SteamID)
 			{
-				kraxbot.SendChatMessage(kraxbot.KraxID, $"Got {state} from {settings.ChatName}");
+				kraxbot.SendKraxMessage($"Got {state} from {settings.ChatName}");
 				lastChatroom = chatRoomID;
 			}
 
@@ -289,12 +289,12 @@ namespace dashe4
 				{
 					case ESpamAction.Ban:
 						kraxbot.BanUser(chatRoomID, userID);
-						kraxbot.SendChatMessage(kraxbot.KraxID, $"Auto banned {userName} from {settings.ChatName}");
+						kraxbot.SendKraxMessage($"Auto banned {userName} from {settings.ChatName}");
 						break;
 
 					case ESpamAction.Kick:
 						kraxbot.KickUser(chatRoomID, userID);
-						kraxbot.SendChatMessage(kraxbot.KraxID, $"Auto kicked {userName} from {settings.ChatName}");
+						kraxbot.SendKraxMessage($"Auto kicked {userName} from {settings.ChatName}");
 						break;
 
 					// TODO: Add warning
