@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
-using SteamKit2;
 
 namespace dashe4
 {
@@ -100,9 +99,9 @@ namespace dashe4
 
 		#region Fields
 
-		public List<UserInfo> Users;
+		public readonly List<UserInfo> Users;
 
-		public List<string> SetRules;
+		public readonly List<string> SetRules;
 
 		public int Ver;
 		public int DcLimit;
