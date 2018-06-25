@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Net;
 using System.Text;
 using System.Web;
@@ -91,11 +92,35 @@ namespace dashe4
 		    }
 	    }
 
-	    public void PrintCookies()
+	    public void PostComment(SteamID userID, string comment)
 	    {
-			Console.WriteLine($"sessionid: {SessionID}");
-		    Console.WriteLine($"steamLogin: {SteamLogin}");
-		    Console.WriteLine($"steamLoginSecure: {SteamLoginSecure}");
-		}
+		    if (!IsLoggedOn)
+			    return;
+
+		    var postData = $"comment={comment}&count=6&sessionid={SessionID}";
+		    var url = $"http://steamcommunity.com/comment/Profile/post/{userID.ConvertToUInt64()}/-1/";
+
+		    var response = Request(url, postData);
+		    Kraxbot.Log(response);
+	    }
+
+	    private string Request(string url, string postData)
+	    {
+		    var bytes = Encoding.UTF8.GetBytes(postData);
+
+		    var request = (HttpWebRequest)WebRequest.Create(url);
+		    request.KeepAlive = false;
+		    request.Method = "POST";
+		    request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
+		    request.ContentLength = bytes.Length;
+		    request.CookieContainer = Cookies;
+
+		    var stream = request.GetRequestStream();
+		    stream.Write(bytes, 0, bytes.Length);
+		    stream.Close();
+
+		    var response = (HttpWebResponse) request.GetResponse();
+		    return new StreamReader(response.GetResponseStream()).ReadToEnd();
+	    }
     }
 }
