@@ -37,6 +37,8 @@ namespace dashe4
 			WriteToFile();
 		}
 
+		public bool Contains(ulong item) => items.Contains(item);
+
 		private async void WriteToFile()
 		{
 			using (var writer = new StreamWriter("chatrooms.txt"))

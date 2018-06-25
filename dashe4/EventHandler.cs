@@ -418,7 +418,13 @@ namespace dashe4
 
 		private void OnChatEnter(SteamFriends.ChatEnterCallback callback)
 		{
-			// TODO: This is triggered on group event!
+			// TODO: This is triggered on group event (sometimes?)!
+
+			if (chatrooms.Contains(callback.ChatID))
+			{
+				Kraxbot.Log($"Warning: Entered {callback.ChatRoomName} twice");
+				return;
+			}
 
 			var settings = kraxbot.GetChatRoomSettings(callback.ChatID);
 
