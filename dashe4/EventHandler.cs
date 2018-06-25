@@ -230,7 +230,7 @@ namespace dashe4
 
 		private void OnFriendsList(SteamFriends.FriendsListCallback callback)
 	    {
-			kraxbot.JoinChatRoom(new SteamID(103582791438821937));
+			// TODO: Auto-join chatrooms here?
 	    }
 
 		private void OnChatMemberInfo(SteamFriends.ChatMemberInfoCallback callback)
@@ -418,6 +418,8 @@ namespace dashe4
 
 		private void OnChatEnter(SteamFriends.ChatEnterCallback callback)
 		{
+			// TODO: This is triggered on group event!
+
 			var settings = kraxbot.GetChatRoomSettings(callback.ChatID);
 
 			// Fill settings with stuff
