@@ -28,7 +28,8 @@ namespace dashe4
 
 		private readonly ChatroomCollection chatrooms;
 
-		private SteamID lastChatroom, lastInviter;
+		private SteamID  lastChatroom, lastInviter, lastFriendMessage;
+		private DateTime lastFriendTime;
 
 		public EventHandler(Kraxbot bot)
 		{
@@ -510,6 +511,15 @@ namespace dashe4
 			var message = callback.Message;
 			var userID  = callback.Sender;
 
+			// PM Spam check
+			if (lastFriendTime == DateTime.Now && userID == lastFriendMessage)
+			{
+				// oh noes
+				kraxbot.SendKraxMessage($"Removed {kraxbot.GetFriendPersonaName(userID)} because of spamming in PM");
+				kraxbot.RemoveFriend(userID);
+				return;
+			}
+
 			// Krax commands
 			if (message.StartsWith('-') && userID == kraxbot.KraxID)
 			{
@@ -620,8 +630,16 @@ namespace dashe4
 					kraxbot.SendKraxMessage("Logged in to web");
 				}
 			}
+			
+			else if (message.StartsWith('!'))
+				kraxbot.SendChatMessage(userID, "Sorry, commands only work in group chats");
 			else
 				cmnd.HandleCleverbot(userID, message.Trim());
+
+			RegisterUserEvent(userID, UserEventType.Message);
+
+			lastFriendTime    = DateTime.Now;
+			lastFriendMessage = userID;
 		}
 
 		private void OnFriendAdded(SteamFriends.FriendAddedCallback callback)
