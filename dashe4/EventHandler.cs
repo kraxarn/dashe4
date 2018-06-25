@@ -24,6 +24,8 @@ namespace dashe4
 		private readonly Dictionary<SteamID, UserCooldowns>  users;
 		private readonly Dictionary<SteamID, GroupCooldowns> groups;
 
+		private readonly ChatroomCollection chatrooms;
+
 		private SteamID lastChatroom, lastInviter;
 
 		public EventHandler(Kraxbot bot)
@@ -38,6 +40,8 @@ namespace dashe4
 			friends = new Dictionary<SteamID, FriendDetails>();
 			users   = new Dictionary<SteamID, UserCooldowns>();
 			groups  = new Dictionary<SteamID, GroupCooldowns>();
+
+			chatrooms = new ChatroomCollection();
 
 			manager.Subscribe<SteamClient.ConnectedCallback>(OnConnected);				// We connected
 			manager.Subscribe<SteamClient.DisconnectedCallback>(OnDisconnected);		// We got disconnected
@@ -169,6 +173,9 @@ namespace dashe4
 			return level;
 		}
 
+		public IEnumerable<ulong> GetCurrentChatrooms()
+			=> chatrooms;
+
 		#endregion
 
 		#region SteamClient
@@ -184,8 +191,8 @@ namespace dashe4
 		#region SteamUser
 
 		// When finished logging in, set us as online
-		private void OnAccountInfo(SteamUser.AccountInfoCallback accountInfoCallback) =>
-			kraxbot.SetPersonaState(EPersonaState.Online);
+		private void OnAccountInfo(SteamUser.AccountInfoCallback accountInfoCallback) 
+			=> kraxbot.SetPersonaState(EPersonaState.Online);
 
 		private void OnLoggedOff(SteamUser.LoggedOffCallback loggedOffCallback) => Kraxbot.Log("OnLoggedOff");
 
@@ -206,6 +213,10 @@ namespace dashe4
 
 			// Login to Web
 			kraxbot.LogOnToWeb();
+			
+			// Join chatrooms again
+			foreach (var chatroom in chatrooms)
+				kraxbot.JoinChatRoom(chatroom);
 		}
 
 		private void OnMachineAuth(SteamUser.UpdateMachineAuthCallback obj) => Kraxbot.Log("OnMachineAuth");
@@ -262,6 +273,7 @@ namespace dashe4
 			{
 				kraxbot.SendKraxMessage($"Got {state} from {settings.ChatName}");
 				lastChatroom = chatRoomID;
+				chatrooms.Remove(chatRoomID);
 			}
 
 			// User entered chat
@@ -432,6 +444,9 @@ namespace dashe4
 					user.Permission = member.Permissions;
 				}
 			}
+
+			// Add to list of current chatrooms
+			chatrooms.Add(callback.ChatID);
 
 			Kraxbot.Log($"Joined {callback.ChatRoomName} with invite from {settings.InvitedName}");
 		}
