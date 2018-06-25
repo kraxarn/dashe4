@@ -6,6 +6,7 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 using Newtonsoft.Json;
 using SteamKit2;
 
@@ -337,5 +338,36 @@ namespace dashe4
 
 		    return json != null;
 	    }
-	}
+
+	    private uint GetGroupMemberCount(string url)
+	    {
+		    if (TryGet(url, out var response))
+		    {
+			    var xml = new XmlDocument();
+
+			    try
+			    {
+					xml.LoadXml(response);
+			    }
+			    catch (XmlException e)
+			    {
+					Log($"Failed to parse XML: {e.Message}");
+				    return 0;
+			    }
+
+			    var count = xml.DocumentElement?.SelectSingleNode("memberCount");
+
+			    if (uint.TryParse(count?.InnerText, out var c))
+				    return c;
+		    }
+
+		    return 0;
+	    }
+
+	    public uint GetMemberCount(string name) 
+		    => GetGroupMemberCount($"http://steamcommunity.com/groups/{name}/memberslistxml/?xml=1");
+
+	    public uint GetMemberCount(ulong groupID) 
+		    => GetGroupMemberCount($"http://steamcommunity.com/gid/{groupID}/memberslistxml/?xml=1");
+    }
 }
