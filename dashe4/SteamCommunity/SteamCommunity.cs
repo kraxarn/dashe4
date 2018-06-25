@@ -104,6 +104,17 @@ namespace dashe4
 		    Kraxbot.Log(response);
 	    }
 
+	    public void InviteToGroup(ulong groupID, ulong userID)
+	    {
+		    if (!IsLoggedOn)
+			    return;
+
+		    var postData = $"group={groupID}&invitee={userID}&sessionID={SessionID}&type=groupInvite";
+		    var url = "https://steamcommunity.com/actions/GroupInvite";
+
+		    var response = Request(url, postData);
+		}
+
 	    private string Request(string url, string postData)
 	    {
 		    var bytes = Encoding.UTF8.GetBytes(postData);
