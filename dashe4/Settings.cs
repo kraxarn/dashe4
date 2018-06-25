@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Xml.Serialization;
 using Newtonsoft.Json;
 
 namespace dashe4
@@ -248,5 +249,8 @@ namespace dashe4
 
 			return true;
 		}
+
+		public static Settings Load(ulong chatRoomID) 
+			=> JsonConvert.DeserializeObject<Settings>(File.ReadAllText($"settings/{chatRoomID}.json"));
 	}
 }

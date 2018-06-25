@@ -126,8 +126,6 @@ namespace dashe4
 
 			// Post test comment
 			PostComment(KraxID, "Comment from the future");
-
-			community.PrintCookies();
 	    }
 
 		// If we want to change it later
@@ -228,7 +226,7 @@ namespace dashe4
 		    if (File.Exists($"./settings/{chatID}.json"))
 		    {
 			    Log("Debug: Settings found in file, saving to chatrooms");
-			    s = JsonConvert.DeserializeObject<Settings>($"./settings/{chatID}.json");
+			    s = Settings.Load(chatID);
 		    }
 		    else
 		    {
@@ -236,11 +234,10 @@ namespace dashe4
 			    s = new Settings(chatID);
 		    }
 
-		    SaveSettingsToList(s);
+		    chatrooms[chatRoomID] = s;
+			s.Save();
 		    return s;
 	    }
-
-	    private void SaveSettingsToList(Settings settings) => chatrooms[settings.ChatID] = settings;
 
 	    public static string ExecuteProcess(string fileName, string arguments = null, int timeout = 3000)
 	    {
