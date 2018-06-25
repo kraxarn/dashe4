@@ -31,11 +31,15 @@ namespace dashe4
 		private SteamID  lastChatroom, lastInviter, lastFriendMessage;
 		private DateTime lastFriendTime;
 
+		private DateTime connectTime;
+
 		public EventHandler(Kraxbot bot)
 		{
 			kraxbot = bot;
 			var manager = bot.Manager;
 			running = true;
+
+			connectTime = DateTime.Now;
 
 			cmnd = new Command(bot);
 			rng  = new Random();
@@ -218,6 +222,8 @@ namespace dashe4
 			kraxbot.LogOnToWeb();
 			
 			// Join chatrooms again
+			connectTime = DateTime.Now;
+
 			foreach (var chatroom in chatrooms)
 				kraxbot.JoinChatRoom(chatroom);
 		}
@@ -420,9 +426,12 @@ namespace dashe4
 		{
 			// TODO: This is triggered on group event (sometimes?)!
 
-			if (chatrooms.Contains(callback.ChatID))
+			// TODO: This is probably not a good idea when auto-joining
+			var connect = DateTime.Now - connectTime;
+
+			if (connect.TotalSeconds > 5 && chatrooms.Contains(callback.ChatID))
 			{
-				Kraxbot.Log($"Warning: Entered {callback.ChatRoomName} twice");
+				Kraxbot.Log($"Warning: Entered {callback.ChatRoomName} twice ({connect.TotalMinutes}m ago)");
 				return;
 			}
 
