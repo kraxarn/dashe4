@@ -129,6 +129,8 @@ namespace dashe4
 			PostComment(KraxID, "Comment from the future");
 	    }
 
+	    public bool IsLoggedOnToWeb => community.IsLoggedOn;
+
 		// If we want to change it later
 		public static void Log(string message) => Console.WriteLine(message);
 
@@ -188,6 +190,8 @@ namespace dashe4
 	    public void UnbanUser(SteamID chatRoomID, SteamID userID) => friends.UnbanChatMember(chatRoomID, userID);
 
 	    public void LeaveChat(SteamID chatRoomID) => friends.LeaveChat(chatRoomID);
+
+	    public void InviteToChat(SteamID chatRoomID, SteamID userID) => friends.InviteUserToChat(userID, chatRoomID);
 
 	    public void AddFriend(SteamID userID) => friends.AddFriend(userID);
 

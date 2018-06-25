@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using SteamKit2;
@@ -499,7 +501,125 @@ namespace dashe4
 
 		private void OnFriendMsg(SteamFriends.FriendMsgCallback callback)
 		{
+			// If message is empty, it's just a 'typing...'
+			if (callback.Message.Trim().Length == 0)
+				return;
+
 			Kraxbot.Log($"{kraxbot.GetFriendPersonaName(callback.Sender)}: {callback.Message}");
+
+			var message = callback.Message;
+			var userID  = callback.Sender;
+
+			// Krax commands
+			if (message.StartsWith('-') && userID == kraxbot.KraxID)
+			{
+				if (message == "-cur_cr")
+				{
+					var msg = "Chatrooms:";
+
+					foreach (var chatroom in chatrooms)
+					{
+						var settings = kraxbot.GetChatRoomSettings(chatroom);
+						var bot      = settings.Users.Single(u => u.SteamID == kraxbot.SteamID);
+
+						msg += $"\n{settings.ChatName}\tsteam://friends/joinchat/{chatroom}\t{settings.InvitedName ?? "Unknown"}\t{settings.Users.Count} users\t{bot.Rank}";
+					}
+
+					kraxbot.SendKraxMessage(msg);
+				}
+
+				else if (message == "-get_ip")
+				{
+					using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.IP))
+					{
+						socket.Connect("0.0.0.0", 65530);
+						var endPoint = socket.LocalEndPoint as IPEndPoint;
+						kraxbot.SendKraxMessage($"IP: {endPoint?.Address}");
+					}
+				}
+
+				else if (message.StartsWith("-leave "))
+				{
+					if (ulong.TryParse(message.Substring(7), out var chat))
+						kraxbot.LeaveChat(chat);
+					else
+						kraxbot.SendKraxMessage($"'{message.Substring(7)}' is not a valid chatID");
+				}
+
+				else if (message.StartsWith("-join "))
+				{
+					if (ulong.TryParse(message.Substring(6), out var chat))
+						kraxbot.JoinChatRoom(chat);
+					else
+						kraxbot.SendKraxMessage($"'{message.Substring(6)}' is not a valid chatID");
+				}
+
+				else if (message.StartsWith("-invite "))
+				{
+					if (ulong.TryParse(message.Substring(8), out var chat))
+						kraxbot.InviteToChat(chat, kraxbot.KraxID);
+					else
+						kraxbot.SendKraxMessage($"'{message.Substring(8)}' is not a valid chatID");
+				}
+
+				else if (message == "-get_groups")
+				{
+					// TODO ?
+				}
+				else if (message == "-clean_groups")
+				{
+					// TODO ?
+				}
+
+				else if (message == "-get_friends")
+				{
+					// TODO ?
+				}
+				else if (message == "-clean_friends")
+				{
+					// TODO ?
+				}
+
+				else if (message == "-quit")
+				{
+					running = false;
+					Environment.Exit(0);
+				}
+
+				else if (message == "-fortune")
+					kraxbot.SendKraxMessage($"\n{Kraxbot.ExecuteProcess("fortune", "-n 200 -s")}");
+
+				else if (message.StartsWith("-fortune "))
+				{
+					if (ulong.TryParse(message.Substring(9), out var chat))
+					{
+						var fortune = Kraxbot.ExecuteProcess("fortune", "-n 200 -s");
+						kraxbot.SendChatRoomMessage(chat, $"\n{fortune}");
+					}
+					else
+						kraxbot.SendKraxMessage($"'{message.Substring(9)}' is not a valid chatID");
+				}
+
+				else if (message == "-post_comment ")
+					kraxbot.PostComment(kraxbot.KraxID, message.Substring(14));
+
+				else if (message == "-login_community")
+				{
+					if (kraxbot.IsLoggedOnToWeb)
+						kraxbot.SendKraxMessage("Already logged in to web");
+					else
+					{
+						kraxbot.LogOnToWeb();
+						kraxbot.SendKraxMessage("Logged in to web");
+					}
+				}
+
+				else if (message == "-login_community_force")
+				{
+					kraxbot.LogOnToWeb();
+					kraxbot.SendKraxMessage("Logged in to web");
+				}
+			}
 		}
 
 		private void OnFriendAdded(SteamFriends.FriendAddedCallback callback)
