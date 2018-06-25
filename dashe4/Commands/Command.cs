@@ -363,6 +363,26 @@ namespace dashe4
 	    
 	    #endregion
 
+	    public void HandleCleverbot(SteamID userID, string message)
+	    {
+		    if (message.Length < 3)
+			    return;
+
+		    if (!cleverbots.ContainsKey(userID))
+		    {
+				// Create session
+				// TODO: Try-catch this
+			    var api = kraxbot.API.CleverbotIO;
+				cleverbots[userID] = CleverbotSession.NewSession(api.User, api.Key);
+			    Kraxbot.Log($"[S] Created cleverbot session for user {kraxbot.GetFriendPersonaName(userID)}");
+			}
+
+			// TODO: Prob do this async and try-catch
+		    var response = cleverbots[userID].Send(message);
+		    Kraxbot.Log($"[F] Bot: {response}");
+		    SendChatMessage(userID, response);
+		}
+
 		public void Handle(SteamID chatRoomID, SteamID userID, string message)
 		{
 			/*
@@ -538,7 +558,7 @@ namespace dashe4
 					// TODO: Try-catch this if it fails
 					var p = kraxbot.API.CleverbotIO;
 					cleverbots[chatRoomID] = CleverbotSession.NewSession(p.User, p.Key);
-					Kraxbot.Log($"[S] Created cleverbot session for {settings.ChatName}");
+					Kraxbot.Log($"[S] Created cleverbot session for chat {settings.ChatName}");
 				}
 
 				// Ask it

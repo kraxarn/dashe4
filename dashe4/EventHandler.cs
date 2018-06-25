@@ -620,6 +620,8 @@ namespace dashe4
 					kraxbot.SendKraxMessage("Logged in to web");
 				}
 			}
+			else
+				cmnd.HandleCleverbot(userID, message.Trim());
 		}
 
 		private void OnFriendAdded(SteamFriends.FriendAddedCallback callback)
