@@ -1378,6 +1378,12 @@ namespace dashe4
 						SendMessage(chatRoomID, $"Unbanned {found.Name}");
 					}
 				}
+
+				else if (message == "!whatsnew")
+				{
+					if (TryGetJson("https://api.github.com/repos/KraXarN/dashe4/releases/latest", out var json))
+						SendMessage(chatRoomID, $"What's new in {(string) json.tag_name}:\n{(string) json.body}");
+				}
 			}
 
 			#endregion
