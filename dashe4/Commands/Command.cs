@@ -270,9 +270,8 @@ namespace dashe4
 			    settings[setting] = true;
 			    SendMessage(settings.ChatID, $"{name} is now enabled");
 			}
-
-			// TODO: Save here
-		    //settings.Save();
+			
+		    settings.Save();
 	    }
 
 	    private bool SetDelay(string delay, int time, Settings settings)
@@ -312,6 +311,47 @@ namespace dashe4
 
 		    return token != null;
 	    }
+
+	    private void WarnUser(string reason, SteamID userID, Settings chat)
+	    {
+		    var user = chat.Users.Single(u => u.SteamID == userID);
+		    user.Warnings++;
+			user.LastTime = DateTime.Now;
+		    var warns = user.Warnings;
+
+		    var chatRoomID = chat.ChatID;
+		    var rank = chat.Users.Single(u => u.SteamID == kraxbot.SteamID).Rank;
+
+			kraxbot.SendKraxMessage($"Warned {kraxbot.GetFriendPersonaName(userID)} ({warns}) because of {reason} in {chat.ChatName}");
+
+		    switch (warns)
+		    {
+			    case 1:
+				    SendMessage(chatRoomID, "This is your first warning");
+				    break;
+
+			    case 3 when rank != EClanPermission.Officer:
+				    SendMessage(chatRoomID, rng.Next(20) == 1 ? @"¯\_(ツ)_/¯" : "Your own fault");
+					user.Warnings = 0;
+
+				    kraxbot.KickUser(chatRoomID, userID);
+				    break;
+
+				case 4:
+					SendMessage(chatRoomID, "Warning, one more will get you banned!");
+					break;
+
+				case 5:
+				    SendMessage(chatRoomID, rng.Next(10) == 1 ? @"¯\_(ツ)_/¯" : "Your own fault");
+				    kraxbot.BanUser(chatRoomID, userID);
+				    user.Warnings = 0;
+				    break;
+
+			    default:
+				    SendMessage(chatRoomID, $"You now have {warns} warnings");
+				    break;
+		    }
+		}
 
 		/// <summary>
 		/// Gets all games a user owns (free and paid)
@@ -431,11 +471,15 @@ namespace dashe4
 
 			Kraxbot.Log($"[C] [{settings.ChatName.Substring(0, 2)}] [{userPermission}] {userName}: {message}");
 
-			// Check if user has entry in settings.User (Should be created when joining
-			// TODO: This is sort of temp
-			// TODO: We could create some temporary user here, just to avoid crashes
+			// Check if user has entry in settings.User (Should always be)
 			if (!settings.Users.Contains(user))
+			{
 				Kraxbot.Log("Warning: User does not exist in chatroom!");
+				kraxbot.SendKraxMessage($"Warning: {userName} does not exist in {settings.ChatName}");
+
+				// TODO: Return or create temporary user?
+				return;
+			}
 
 			// Set when user last sent a message for spam protection
 			user.LastMessage = DateTime.Now;
@@ -469,7 +513,6 @@ namespace dashe4
 			}
 
 			// When someone chats, we want to reset disconnect
-			// TODO: In dashe3, we also do a check here if it exists
 			user.Disconnects = 0;
 
 			// Memes
@@ -537,7 +580,7 @@ namespace dashe4
 									break;
 
 								case ESpamAction.Warn:
-									// TODO
+									WarnUser("offensive word", userID, settings);
 									break;
 							}
 						}
