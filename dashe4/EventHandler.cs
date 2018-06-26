@@ -293,13 +293,15 @@ namespace dashe4
 				if (user == default(UserInfo))
 				{
 					// User doesn't exist, create
-					settings.Users.Add(new UserInfo
+					user = new UserInfo
 					{
 						Name       = GetPlayerName(userID),
 						SteamID    = userID,
 						Rank       = member.Details,
 						Permission = member.Permissions
-					});
+					};
+
+					settings.Users.Add(user);
 				}
 				else
 				{
