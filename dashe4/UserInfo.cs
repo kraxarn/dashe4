@@ -36,7 +36,7 @@ namespace dashe4
 		public int Warnings;
 		public int SetWarnings;
 
-		// TODO: USe this to determine if user is in chat
+		// TODO: Use this to determine if user is in chat
 		public bool InChat;
 	}
 }
