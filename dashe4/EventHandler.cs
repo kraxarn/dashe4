@@ -351,7 +351,7 @@ namespace dashe4
 					switch (user.Disconnects)
 					{
 						case 0:
-							kraxbot.SendChatRoomMessage(chatRoomID, $"{settings.WelcomeMsg} {userName} {settings.WelcomeEnd}");
+							kraxbot.SendChatRoomMessage(chatRoomID, $"{settings.WelcomeMsg} {userName}{settings.WelcomeEnd}");
 							break;
 
 						case 1:
