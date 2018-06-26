@@ -24,7 +24,8 @@ namespace dashe4
 	    private readonly EventHandler eventHandler;
 	    private readonly WebClient    web;
 
-	    public readonly string Version;
+	    public readonly string   Version;
+	    public readonly DateTime LastUpdate;
 
 	    private readonly Dictionary<ulong, Settings> chatrooms;
 
@@ -46,12 +47,8 @@ namespace dashe4
 	    public Kraxbot()
 	    {
 			// Vars
-			// TODO: Get version from GitHub
-		    Version   = "4.0.0-alpha.1";
 			chatrooms = new Dictionary<ulong, Settings>();
-
 		    UniqueID = 0;
-
 			API = new APIKey();
 
 			// Steam
@@ -61,13 +58,19 @@ namespace dashe4
 			manager = new CallbackManager(client);
 			group   = new SteamGroup(client);
 			web     = new WebClient();
-
-			// TODO: ?
-		    // web.Headers.Add("Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0");
+			
+		    web.Headers.Add(HttpRequestHeader.UserAgent, "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0");
 
 			eventHandler = new EventHandler(this);
 
 			KraxID = new SteamID(76561198024704964);
+
+		    // Set version
+		    if (TryGetJson("https://api.github.com/repos/KraXarN/dashe4/releases/latest", out var json))
+		    {
+			    Version = (string) json.tag_name;
+				LastUpdate = DateTime.Parse((string) json.published_at);
+		    }
 
 			// Welcome
 			Log($"Welcome to Kraxbot {Version}");
