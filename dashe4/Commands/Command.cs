@@ -903,7 +903,7 @@ namespace dashe4
 					 * Node version: v8.10.0
 					 *
 					 * dashe4 output:
-					 * OS: 'uname -sr'
+					 * OS: 'uname -sr' ('/usr/lib/os-release')
 					 * CPU load: '/proc/loadavg'
 					 * Up time: '/proc/uptime[0]' ('/proc/uptime[1]' idle)
 					 * .NET Core: 'dotnet --version'
@@ -915,6 +915,14 @@ namespace dashe4
 					{
 						var all = File.ReadAllText("/proc/version").Split(' ');
 						osVer = $"{all[0]} {all[2]}";
+					}
+
+					// Get openSUSE version
+					if (File.Exists("/usr/lib/os-release"))
+					{
+						var all  = File.ReadAllLines("/usr/lib/os-release");
+						var name = all.First(l => l.StartsWith("PRETTY_NAME"));
+						osVer += $" ({name.Substring(13, name.Length - 14)})";
 					}
 
 					// Get average load
