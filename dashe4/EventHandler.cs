@@ -215,6 +215,9 @@ namespace dashe4
 
 		private void OnLoginKey(SteamUser.LoginKeyCallback callback)
 		{
+			// TODO: This doesn't always trigger (Move most stuff to OnLoggedOn)
+			Kraxbot.Log("OnLoginKey");
+
 			// Save unique ID to use with SteamCommunity
 			kraxbot.UniqueID = callback.UniqueID;
 
@@ -648,6 +651,9 @@ namespace dashe4
 					kraxbot.LogOnToWeb();
 					kraxbot.SendKraxMessage("Logged in to web");
 				}
+
+				else if (message == "-getNumInvites")
+					kraxbot.SendKraxMessage($"Pending invites: {kraxbot.NumInvites}");
 			}
 			
 			else if (message.StartsWith('!'))
