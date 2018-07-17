@@ -117,18 +117,20 @@ namespace dashe4
 		    var response = Request(url, postData);
 		}
 
-	    public string GetInvites()
+	    public int NumInvites
 	    {
-		    if (!IsLoggedOn)
-			    return null;
+		    get
+		    {
+			    if (!IsLoggedOn)
+				    return -1;
 
-			/*
-				*Slaps roof of line*
-				This code can throw so many exceptions
-			 */
-		    var response = (JArray) JsonConvert.DeserializeObject(Request("https://steamcommunity.com/actions/GetNotificationCounts", null));
-
-		    return (string) response[6];
+			    /*
+				    *Slaps roof of line*
+				    This code can throw so many exceptions
+			     */
+				dynamic obj = JsonConvert.DeserializeObject(Request("https://steamcommunity.com/actions/GetNotificationCounts", string.Empty));
+			    return (int) obj["6"];
+		    }
 	    }
 
 	    private string Request(string url, string postData)
