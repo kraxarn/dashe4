@@ -4,6 +4,7 @@ using System.Net;
 using System.Text;
 using System.Web;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using SteamKit2;
 
 namespace dashe4
@@ -116,7 +117,7 @@ namespace dashe4
 		    var response = Request(url, postData);
 		}
 
-	    public string GetGroupInvites()
+	    public string GetInvites()
 	    {
 		    if (!IsLoggedOn)
 			    return null;
@@ -125,9 +126,9 @@ namespace dashe4
 				*Slaps roof of line*
 				This code can throw so many exceptions
 			 */
-		    var response = JsonConvert.DeserializeObject(Request("https://steamcommunity.com/actions/GetNotificationCounts", null));
+		    var response = (JArray) JsonConvert.DeserializeObject(Request("https://steamcommunity.com/actions/GetNotificationCounts", null));
 
-		    return (string) response;
+		    return (string) response[6];
 	    }
 
 	    private string Request(string url, string postData)
