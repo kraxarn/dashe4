@@ -211,6 +211,15 @@ namespace dashe4
 			// Save WebAPI stuff
 			if (callback.Result == EResult.OK)
 				kraxbot.UserNonce = callback.WebAPIUserNonce;
+
+			// Login to Web
+			kraxbot.LogOnToWeb();
+
+			// Join chatrooms again
+			connectTime = DateTime.Now;
+
+			foreach (var chatroom in chatrooms)
+				kraxbot.JoinChatRoom(chatroom);
 		}
 
 		private void OnLoginKey(SteamUser.LoginKeyCallback callback)
@@ -220,15 +229,6 @@ namespace dashe4
 
 			// Save unique ID to use with SteamCommunity
 			kraxbot.UniqueID = callback.UniqueID;
-
-			// Login to Web
-			kraxbot.LogOnToWeb();
-			
-			// Join chatrooms again
-			connectTime = DateTime.Now;
-
-			foreach (var chatroom in chatrooms)
-				kraxbot.JoinChatRoom(chatroom);
 		}
 
 		private void OnMachineAuth(SteamUser.UpdateMachineAuthCallback obj) => Kraxbot.Log("OnMachineAuth");
