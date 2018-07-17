@@ -3,6 +3,7 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Web;
+using Newtonsoft.Json;
 using SteamKit2;
 
 namespace dashe4
@@ -114,6 +115,20 @@ namespace dashe4
 
 		    var response = Request(url, postData);
 		}
+
+	    public string GetGroupInvites()
+	    {
+		    if (!IsLoggedOn)
+			    return null;
+
+			/*
+				*Slaps roof of line*
+				This code can throw so many exceptions
+			 */
+		    var response = JsonConvert.DeserializeObject(Request("https://steamcommunity.com/actions/GetNotificationCounts", null));
+
+		    return (string) response;
+	    }
 
 	    private string Request(string url, string postData)
 	    {
