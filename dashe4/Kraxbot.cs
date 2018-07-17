@@ -208,6 +208,8 @@ namespace dashe4
 	    public bool TryGetFriendDetails(SteamID userID, out FriendDetails friend) 
 		    => eventHandler.TryGetFriendDetails(userID, out friend);
 
+	    public int NumInvites => community.NumInvites;
+
 		/// <summary>
 		/// Gets chatroom settings and adds them to chatroom list if needed
 		/// </summary>
