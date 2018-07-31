@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -71,8 +72,10 @@ namespace dashe4
 		    {
 			    Version = (string) json.tag_name;
 
-				// TODO: Hopefully in this format
-			    LastUpdate = DateTime.ParseExact((string) json.published_at, "MM/dd/yyyy HH:mm:ss", null);
+			    if (DateTime.TryParseExact((string) json.published_at, "MM/dd/yyyy HH:mm:ss", null, DateTimeStyles.None, out var date))
+				    LastUpdate = date;
+				else
+					Log("Warning: Failed to get update date");
 		    }
 
 			// Welcome
