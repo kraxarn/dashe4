@@ -206,7 +206,35 @@ namespace dashe4
 		private void OnLoggedOn(SteamUser.LoggedOnCallback callback)
 		{
 			if (callback.Result != EResult.OK)
-				Kraxbot.Error($"Login failed: {callback.Result}");
+			{
+				// Just so guard and two factor can have the same name
+				string code;
+
+				switch (callback.Result)
+				{
+					// Steam Guard
+					case EResult.AccountLogonDenied:
+						Console.Write("Steam Guard: ");
+						code = Console.ReadLine();
+						kraxbot.Login(code);
+						return;
+
+					// Two factor
+					case EResult.AccountLoginDeniedNeedTwoFactor:
+						Console.Write("Two factor: ");
+						code = Console.ReadLine();
+						kraxbot.Login(null, code);
+						return;
+
+					// Other error
+					default:
+						Kraxbot.Error($"Login failed: {callback.Result}");
+						return;
+				}
+			}
+
+			// Log
+			Kraxbot.Log("Logged in");
 
 			// Save WebAPI stuff
 			if (callback.Result == EResult.OK)
@@ -224,9 +252,6 @@ namespace dashe4
 
 		private void OnLoginKey(SteamUser.LoginKeyCallback callback)
 		{
-			// TODO: This doesn't always trigger (Move most stuff to OnLoggedOn)
-			Kraxbot.Log("OnLoginKey");
-
 			// Save unique ID to use with SteamCommunity
 			kraxbot.UniqueID = callback.UniqueID;
 		}

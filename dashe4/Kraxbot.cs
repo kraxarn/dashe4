@@ -90,14 +90,57 @@ namespace dashe4
 
 	    public void Connect() => client.Connect();
 
-	    public void Login()
+	    public void Login(string authCode = null, string twoFactorCode = null)
 	    {
+			// Check if we have a login key
+		    if (File.Exists("loginkey"))
+		    {
+				LoginWithKey();
+			    return;
+		    }
+
 		    var login = File.ReadAllLines("login.txt");
+
+			// Sentry hash
+		    byte[] sentryHash = null;
+
+		    if (File.Exists("sentryhash"))
+			    sentryHash = CryptoHelper.SHAHash(File.ReadAllBytes("sentryhash"));
 
 			user.LogOn(new SteamUser.LogOnDetails
 			{
 				Username = login[0],
-				Password = login[1]
+				Password = login[1],
+				ShouldRememberPassword = true,
+				SentryFileHash = sentryHash,
+				AuthCode = authCode,
+				TwoFactorCode = twoFactorCode
+			});
+	    }
+
+	    private void LoginWithKey()
+	    {
+			// Login
+		    var login = File.ReadAllLines("login.txt");
+
+			// Sentry hash
+			byte[] sentryHash = null;
+
+		    if (File.Exists("sentryhash"))
+			    sentryHash = CryptoHelper.SHAHash(File.ReadAllBytes("sentryhash"));
+
+			// Login key
+		    string loginKey = null;
+
+		    if (File.Exists("loginkey"))
+			    loginKey = File.ReadAllText("loginkey");
+
+			user.LogOn(new SteamUser.LogOnDetails
+			{
+				Username = login[0],
+				ShouldRememberPassword = true,
+				LoginKey = loginKey,
+				SentryFileHash = sentryHash
 			});
 	    }
 
