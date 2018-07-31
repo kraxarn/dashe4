@@ -28,7 +28,7 @@ namespace dashe4
 
 	public class ApiKey
 	{
-		public readonly UserKeyPair CleverbotIO;
+		public readonly UserKeyPair CleverbotIo;
 
 		public readonly IdSecretPair Spotify, DeviantArt;
 
@@ -40,7 +40,7 @@ namespace dashe4
 		{
 			var lines = File.ReadAllLines("apikeys.txt");
 			
-			CleverbotIO = new UserKeyPair(lines[1],   lines[3]);
+			CleverbotIo = new UserKeyPair(lines[1],   lines[3]);
 			Spotify     = new IdSecretPair(lines[6],  lines[8]);
 			DeviantArt  = new IdSecretPair(lines[11], lines[14]);
 

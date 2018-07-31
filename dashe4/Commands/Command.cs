@@ -412,7 +412,7 @@ namespace dashe4
 		    {
 				// Create session
 				// TODO: Try-catch this
-			    var api = kraxbot.API.CleverbotIO;
+			    var api = kraxbot.API.CleverbotIo;
 				cleverbots[userID] = CleverbotSession.NewSession(api.User, api.Key);
 			    Kraxbot.Log($"[S] Created cleverbot session for user {kraxbot.GetFriendPersonaName(userID)}");
 			}
@@ -599,7 +599,7 @@ namespace dashe4
 				{
 					// Create session
 					// TODO: Try-catch this if it fails
-					var p = kraxbot.API.CleverbotIO;
+					var p = kraxbot.API.CleverbotIo;
 					cleverbots[chatRoomID] = CleverbotSession.NewSession(p.User, p.Key);
 					Kraxbot.Log($"[S] Created cleverbot session for chat {settings.ChatName}");
 				}
