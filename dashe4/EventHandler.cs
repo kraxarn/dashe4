@@ -333,12 +333,6 @@ namespace dashe4
 			// TODO: Check for default properly
 			var user = settings.Users.SingleOrDefault(u => u.SteamID == userID);
 
-			if (user == default(UserInfo))
-			{
-				Kraxbot.Log($"Warning: Unknown user {userID} in {settings.ChatName}, ignoring message");
-				return;
-			}
-
 			// See what happened
 			string message;
 
@@ -391,6 +385,11 @@ namespace dashe4
 					user.Rank       = member.Details;
 					user.Permission = member.Permissions;
 				}
+			}
+			else if (user == default(UserInfo))
+			{
+				Kraxbot.Log($"Warning: Unknown user {userID} in {settings.ChatName}, ignoring message");
+				return;
 			}
 
 			// User left chat
