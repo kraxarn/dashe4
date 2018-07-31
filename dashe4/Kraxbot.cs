@@ -59,7 +59,7 @@ namespace dashe4
 			group   = new SteamGroup(client);
 			web     = new WebClient();
 			
-		    web.Headers.Add(HttpRequestHeader.UserAgent, "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:54.0) Gecko/20100101 Firefox/54.0");
+		    web.Headers.Add(HttpRequestHeader.UserAgent, "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:62.0) Gecko/20100101 Firefox/62.0");
 
 			eventHandler = new EventHandler(this);
 
