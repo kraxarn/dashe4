@@ -105,7 +105,7 @@ namespace dashe4
 	    {
 		    var headers = new NameValueCollection
 		    {
-				{ "Authorization", $"Client-ID {kraxbot.API.Imgur}" }
+				{ "Authorization", $"Client-ID {kraxbot.Api.Imgur}" }
 		    };
 
 			Console.WriteLine($"Debug:\tImageID: {imageID}");
@@ -296,7 +296,7 @@ namespace dashe4
 		    token = null;
 
 			// TODO: Probably always the same
-		    var client = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{kraxbot.API.Spotify.ID}:{kraxbot.API.Spotify.Secret}"));
+		    var client = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{kraxbot.Api.Spotify.ID}:{kraxbot.Api.Spotify.Secret}"));
 
 		    var headers = new NameValueCollection
 		    {
@@ -361,7 +361,7 @@ namespace dashe4
 		/// <returns></returns>
 	    private List<GameEntry> GetGamesForUser(ulong userID, bool sort = false)
 	    {
-		    if (TryGetJson($"http://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={kraxbot.API.Steam}&include_appinfo=1&include_played_free_games=1&steamid={userID}", out var json))
+		    if (TryGetJson($"http://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={kraxbot.Api.Steam}&include_appinfo=1&include_played_free_games=1&steamid={userID}", out var json))
 		    {
 			    if (json.response.games != null)
 				{
@@ -385,7 +385,7 @@ namespace dashe4
 		/// <returns></returns>
 	    private List<RecentGameEntry> GetRecentGamesForUser(ulong userID, bool sort = false)
 	    {
-		    if (TryGetJson($"http://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v1/?key={kraxbot.API.Steam}&steamid={userID}", out var json))
+		    if (TryGetJson($"http://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v1/?key={kraxbot.Api.Steam}&steamid={userID}", out var json))
 		    {
 			    if (json.response.games != null)
 			    {
@@ -412,7 +412,7 @@ namespace dashe4
 		    {
 				// Create session
 				// TODO: Try-catch this
-			    var api = kraxbot.API.CleverbotIo;
+			    var api = kraxbot.Api.CleverbotIo;
 				cleverbots[userID] = CleverbotSession.NewSession(api.User, api.Key);
 			    Kraxbot.Log($"[S] Created cleverbot session for user {kraxbot.GetFriendPersonaName(userID)}");
 			}
@@ -599,7 +599,7 @@ namespace dashe4
 				{
 					// Create session
 					// TODO: Try-catch this if it fails
-					var p = kraxbot.API.CleverbotIo;
+					var p = kraxbot.Api.CleverbotIo;
 					cleverbots[chatRoomID] = CleverbotSession.NewSession(p.User, p.Key);
 					Kraxbot.Log($"[S] Created cleverbot session for chat {settings.ChatName}");
 				}
@@ -631,7 +631,7 @@ namespace dashe4
 				    var headers = new NameValueCollection
 				    {
 					    { "Content-Type", "application/json" },
-					    { "Ocp-Apim-Subscription-Key", kraxbot.API.ComputerVision }
+					    { "Ocp-Apim-Subscription-Key", kraxbot.Api.ComputerVision }
 					};
 
 					if (TryRequest("https://westeurope.api.cognitive.microsoft.com/vision/v1.0/describe?maxCandidates=1", headers,
@@ -657,7 +657,7 @@ namespace dashe4
 				
 			    else if (url.StartsWith("https://www.twitch.tv/"))
 			    {
-				    if (TryGet($"https://api.twitch.tv/kraken/streams/{url.Substring(22)}?client_id={kraxbot.API.Twitch}", out var response))
+				    if (TryGet($"https://api.twitch.tv/kraken/streams/{url.Substring(22)}?client_id={kraxbot.Api.Twitch}", out var response))
 				    {
 					    if (TryParseJson(response, out var result))
 					    {
@@ -690,7 +690,7 @@ namespace dashe4
 				    var headers = new NameValueCollection
 				    {
 					    { "Accept", "application/vnd.twitchtv.v5+json" },
-					    { "Client-ID", kraxbot.API.Twitch }
+					    { "Client-ID", kraxbot.Api.Twitch }
 				    };
 
 					if (TryRequest($"https://api.twitch.tv/kraken/clips/{url.Substring(24)}", headers, null, out var response))
@@ -742,7 +742,7 @@ namespace dashe4
 								SendMessage(chatRoomID, "Error finding videoID");
 							else
 							{
-								if (TryGet($"https://www.googleapis.com/youtube/v3/videos?id={videoID}&key={kraxbot.API.Google}&part=statistics,snippet,contentDetails", out var r))
+								if (TryGet($"https://www.googleapis.com/youtube/v3/videos?id={videoID}&key={kraxbot.Api.Google}&part=statistics,snippet,contentDetails", out var r))
 								{
 									if (TryParseJson(r, out var result))
 									{
@@ -1446,7 +1446,7 @@ namespace dashe4
 
 				else if (message == "!rangame")
 				{
-					if (TryGet($"http://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={kraxbot.API.Steam}&include_appinfo=1&include_played_free_games=1&steamid={userID64}", out var response))
+					if (TryGet($"http://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key={kraxbot.Api.Steam}&include_appinfo=1&include_played_free_games=1&steamid={userID64}", out var response))
 					{
 						if (TryParseJson(response, out var json))
 						{
@@ -1595,7 +1595,7 @@ namespace dashe4
 				{
 					if (isMod || settings.Timeout.Search < DateTime.Now)
 					{
-						if (TryGet($"https://www.googleapis.com/youtube/v3/search?part=snippet&q={message.Substring(4)}&type=video&key={kraxbot.API.Google}", out var response))
+						if (TryGet($"https://www.googleapis.com/youtube/v3/search?part=snippet&q={message.Substring(4)}&type=video&key={kraxbot.Api.Google}", out var response))
 						{
 							if (TryParseJson(response, out var json))
 							{
@@ -1627,7 +1627,7 @@ namespace dashe4
 				{
 					if (isMod || settings.Timeout.Search < DateTime.Now)
 					{
-						if (TryGet( $"https://www.googleapis.com/customsearch/v1?cx=004114719084244063804%3Ah7bxvwhveyw&key={kraxbot.API.Google}&q={message.Substring(8)}", out var response))
+						if (TryGet( $"https://www.googleapis.com/customsearch/v1?cx=004114719084244063804%3Ah7bxvwhveyw&key={kraxbot.Api.Google}&q={message.Substring(8)}", out var response))
 						{
 							if (TryParseJson(response, out var json))
 							{
@@ -1747,7 +1747,7 @@ namespace dashe4
 
 				else if (message == "!bday")
 				{
-					if (TryGet($"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={kraxbot.API.Steam}&steamids={userID}", out var response))
+					if (TryGet($"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={kraxbot.Api.Steam}&steamids={userID}", out var response))
 					{
 						if (TryParseJson(response, out var json))
 						{
@@ -1861,7 +1861,7 @@ namespace dashe4
 
 				else if (message == "!lastdown")
 				{
-					if (TryGetJson($"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={kraxbot.API.Steam}&steamids=76561198107682909", out var json))
+					if (TryGetJson($"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={kraxbot.Api.Steam}&steamids=76561198107682909", out var json))
 					{
 						var date = new DateTime(1970, 1, 1).AddSeconds((int) json.response.players[0].lastlogoff);
 						SendMessage(chatRoomID, $"Steam's last downtime was {date}");
@@ -1969,7 +1969,7 @@ namespace dashe4
 
 				else if (message == "!api")
 				{
-					if (TryParseJson($"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={kraxbot.API.Steam}&steamids={userID}", out var json))
+					if (TryParseJson($"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={kraxbot.Api.Steam}&steamids={userID}", out var json))
 					{
 						// TODO: When does this fail?
 						if (!string.IsNullOrEmpty(json.response.players[0].personaname as string))
@@ -2033,7 +2033,7 @@ namespace dashe4
 				{
 					var search = message.Substring(9);
 
-					if (TryGetJson($"http://api.openweathermap.org/data/2.5/weather?units=metric&appid={kraxbot.API.OpenWeatherMap}&q={search}", out var json))
+					if (TryGetJson($"http://api.openweathermap.org/data/2.5/weather?units=metric&appid={kraxbot.Api.OpenWeatherMap}&q={search}", out var json))
 					{
 						if (string.IsNullOrEmpty(json.messageas as string))
 						{

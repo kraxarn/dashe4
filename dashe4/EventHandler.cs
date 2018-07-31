@@ -170,7 +170,7 @@ namespace dashe4
 			 * and make sure it works properly
 			 */
 
-			if (kraxbot.TryGetJson($"http://api.steampowered.com/IPlayerService/GetSteamLevel/v1/?key={kraxbot.API.Steam}&steamid={userID64}", out var json))
+			if (kraxbot.TryGetJson($"http://api.steampowered.com/IPlayerService/GetSteamLevel/v1/?key={kraxbot.Api.Steam}&steamid={userID64}", out var json))
 			{
 				if (json.response.player_level != null)
 					level = (int) json.response.player_level;
