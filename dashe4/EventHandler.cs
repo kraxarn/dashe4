@@ -29,10 +29,8 @@ namespace dashe4
 
 		private readonly ChatroomCollection chatrooms;
 
-		private SteamID  lastChatroom, lastInviter, lastFriendMessage;
+		private SteamID  lastChatroom, lastInviter, lastFriendMessage, joiningChatroom;
 		private DateTime lastFriendTime;
-
-		private DateTime connectTime;
 
 		public EventHandler(Kraxbot bot)
 		{
@@ -40,7 +38,7 @@ namespace dashe4
 			var manager = bot.Manager;
 			running = true;
 
-			connectTime = DateTime.Now;
+			joiningChatroom = null;
 
 			cmnd = new Command(bot);
 			rng  = new Random();
@@ -189,10 +187,18 @@ namespace dashe4
 		#region SteamClient
 
 		// When disconnected, attempt to reconnect
-		private void OnDisconnected(SteamClient.DisconnectedCallback disconnectedCallback) => kraxbot.Connect();
+		private void OnDisconnected(SteamClient.DisconnectedCallback disconnectedCallback)
+		{
+			Kraxbot.Log("Disconnected, attemting to reconnect...");
+			kraxbot.Connect();
+		}
 
 		// When connected, login
-		private void OnConnected(SteamClient.ConnectedCallback callback) => kraxbot.Login();
+		private void OnConnected(SteamClient.ConnectedCallback callback)
+		{
+			Kraxbot.Log("Connected");
+			kraxbot.Login();
+		}
 
 		#endregion
 
@@ -202,7 +208,8 @@ namespace dashe4
 		private void OnAccountInfo(SteamUser.AccountInfoCallback accountInfoCallback) 
 			=> kraxbot.SetPersonaState(EPersonaState.Online);
 
-		private void OnLoggedOff(SteamUser.LoggedOffCallback loggedOffCallback) => Kraxbot.Log("OnLoggedOff");
+		private void OnLoggedOff(SteamUser.LoggedOffCallback loggedOffCallback) 
+			=> Kraxbot.Log("Logged out");
 
 		private void OnLoggedOn(SteamUser.LoggedOnCallback callback)
 		{
@@ -244,11 +251,12 @@ namespace dashe4
 			// Login to Web
 			kraxbot.LogOnToWeb();
 
-			// Join chatrooms again
-			connectTime = DateTime.Now;
-
+			// Join chatrooms
 			foreach (var chatroom in chatrooms)
+			{
+				joiningChatroom = chatroom;
 				kraxbot.JoinChatRoom(chatroom);
+			}
 		}
 
 		private void OnLoginKey(SteamUser.LoginKeyCallback callback)
@@ -493,14 +501,11 @@ namespace dashe4
 
 		private void OnChatEnter(SteamFriends.ChatEnterCallback callback)
 		{
-			// TODO: This is triggered on group event (sometimes?)!
+			// TODO: This is triggered on group event
 
-			// TODO: This is probably not a good idea when auto-joining
-			var connect = DateTime.Now - connectTime;
-
-			if (connect.TotalSeconds > 5 && chatrooms.Contains(callback.ChatID))
+			if (joiningChatroom == null)
 			{
-				Kraxbot.Log($"Warning: Entered {callback.ChatRoomName} twice ({connect.TotalMinutes}m ago)");
+				Kraxbot.Log($"Warning: Tried to enter {callback.ChatRoomName} without joining, possible group invite?");
 				return;
 			}
 
@@ -538,6 +543,9 @@ namespace dashe4
 			chatrooms.Add(callback.ChatID);
 
 			Kraxbot.Log($"Joined {callback.ChatRoomName} with invite from {settings.InvitedName}");
+
+			// Reset joining chatroom
+			joiningChatroom = null;
 		}
 
 		private void OnChatInvite(SteamFriends.ChatInviteCallback callback)
@@ -557,6 +565,9 @@ namespace dashe4
 
 			if (userID != kraxbot.KraxID && (callback.ChatRoomID == lastChatroom || userID == lastInviter))
 			{
+				// Set as joining the chatroom
+				joiningChatroom = callback.ChatRoomID;
+
 				Kraxbot.Log($"Got invite to {callback.ChatRoomName} from {userName}");
 				kraxbot.JoinChatRoom(callback.ChatRoomID);
 
