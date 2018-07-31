@@ -1,4 +1,4 @@
-﻿// ReSharper disable InconsistentNaming
+﻿// ReSharper disable InconsistentNaming MemberHidesStaticFromOuterClass
 using System.Collections.Generic;
 
 namespace dashe4

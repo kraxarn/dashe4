@@ -4,7 +4,6 @@ using System.Net;
 using System.Text;
 using System.Web;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using SteamKit2;
 
 namespace dashe4
@@ -112,9 +111,9 @@ namespace dashe4
 			    return;
 
 		    var postData = $"group={groupID}&invitee={userID}&sessionID={SessionID}&type=groupInvite";
-		    var url = "https://steamcommunity.com/actions/GroupInvite";
+		    const string url = "https://steamcommunity.com/actions/GroupInvite";
 
-		    var response = Request(url, postData);
+		    Kraxbot.Log($"InviteToGroup: {Request(url, postData)}");
 		}
 
 	    public int NumInvites
