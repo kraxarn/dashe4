@@ -269,6 +269,9 @@ namespace dashe4
 			client.Send(game);
 		}
 
+	    public void SendMachineAuthResponse(SteamUser.MachineAuthDetails details) 
+		    => user.SendMachineAuthResponse(details);
+
 		/// <summary>
 		/// Gets chatroom settings and adds them to chatroom list if needed
 		/// </summary>

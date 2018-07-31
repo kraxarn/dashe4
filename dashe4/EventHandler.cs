@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using SteamKit2;
@@ -261,7 +262,37 @@ namespace dashe4
 			Kraxbot.Log("Saved login key");
 		}
 
-		private void OnMachineAuth(SteamUser.UpdateMachineAuthCallback obj) => Kraxbot.Log("OnMachineAuth");
+		private void OnMachineAuth(SteamUser.UpdateMachineAuthCallback callback)
+		{
+			// Write sentry hash
+			int fileSize;
+			byte[] sentryHash;
+
+			using (var file = File.Open("sentryhash", FileMode.OpenOrCreate, FileAccess.ReadWrite))
+			{
+				file.Seek(callback.Offset, SeekOrigin.Begin);
+				file.Write(callback.Data, 0, callback.BytesToWrite);
+				fileSize = (int) file.Length;
+				file.Seek(0, SeekOrigin.Begin);
+
+				using (var hash = new SHA1CryptoServiceProvider())
+					sentryHash = hash.ComputeHash(file);
+			}
+
+			// Tell Steam we're accepting the sentry file
+			kraxbot.SendMachineAuthResponse(new SteamUser.MachineAuthDetails
+			{
+				JobID = callback.JobID,
+				FileName = callback.FileName,
+				BytesWritten = callback.BytesToWrite,
+				FileSize = fileSize,
+				Offset = callback.Offset,
+				Result = EResult.OK,
+				LastError = 0,
+				OneTimePassword = callback.OneTimePassword,
+				SentryFileHash = sentryHash
+			});
+		}
 
 		#endregion
 
