@@ -253,6 +253,8 @@ namespace dashe4
 
 	    public int NumInvites => community.NumInvites;
 
+	    public void AcceptNewLoginKey(SteamUser.LoginKeyCallback loginKey) => user.AcceptNewLoginKey(loginKey);
+
 		/// <summary>
 		/// Gets chatroom settings and adds them to chatroom list if needed
 		/// </summary>

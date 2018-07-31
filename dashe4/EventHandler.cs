@@ -254,6 +254,11 @@ namespace dashe4
 		{
 			// Save unique ID to use with SteamCommunity
 			kraxbot.UniqueID = callback.UniqueID;
+
+			// Save key to file
+			File.WriteAllTextAsync("loginkey", callback.LoginKey);
+			kraxbot.AcceptNewLoginKey(callback);
+			Kraxbot.Log("Saved login key");
 		}
 
 		private void OnMachineAuth(SteamUser.UpdateMachineAuthCallback obj) => Kraxbot.Log("OnMachineAuth");
