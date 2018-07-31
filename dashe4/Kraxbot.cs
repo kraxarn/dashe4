@@ -67,7 +67,7 @@ namespace dashe4
 			KraxID = new SteamID(76561198024704964);
 
 		    // Set version
-		    if (TryGetJson("https://api.github.com/repos/KraXarN/dashe4/releases/latest", out var json))
+		    if (TryGetJson("https://api.github.com/repos/kraxarn/dashe4/releases/latest", out var json))
 		    {
 			    Version = (string) json.tag_name;
 				LastUpdate = DateTime.Parse((string) json.published_at);
