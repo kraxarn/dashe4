@@ -70,7 +70,9 @@ namespace dashe4
 		    if (TryGetJson("https://api.github.com/repos/kraxarn/dashe4/releases/latest", out var json))
 		    {
 			    Version = (string) json.tag_name;
-				LastUpdate = DateTime.Parse((string) json.published_at);
+
+				// TODO: Hopefully in this format
+			    LastUpdate = DateTime.ParseExact((string) json.published_at, "MM/dd/yyyy HH:mm:ss", null);
 		    }
 
 			// Welcome
