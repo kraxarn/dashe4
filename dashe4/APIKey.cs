@@ -26,7 +26,7 @@ namespace dashe4
 		}
 	}
 
-	public class APIKey
+	public class ApiKey
 	{
 		public readonly UserKeyPair CleverbotIO;
 
@@ -36,7 +36,7 @@ namespace dashe4
 
 		public readonly string Trello, ComputerVision, Twitch, Imgur;
 
-		public APIKey()
+		public ApiKey()
 		{
 			var lines = File.ReadAllLines("apikeys.txt");
 			

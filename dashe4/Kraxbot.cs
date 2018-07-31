@@ -34,7 +34,7 @@ namespace dashe4
 
 	    public readonly SteamID KraxID;
 
-	    public readonly APIKey API;
+	    public readonly ApiKey API;
 
 		// SteamCommunity
 	    public uint UniqueID;
@@ -50,7 +50,7 @@ namespace dashe4
 			// Vars
 			chatrooms = new Dictionary<ulong, Settings>();
 		    UniqueID = 0;
-			API = new APIKey();
+			API = new ApiKey();
 
 			// Steam
 			client  = new SteamClient();
