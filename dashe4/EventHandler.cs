@@ -505,7 +505,7 @@ namespace dashe4
 
 			if (joiningChatroom == null)
 			{
-				Kraxbot.Log($"Warning: Tried to enter {callback.ChatRoomName} without joining, possible group invite?");
+				Kraxbot.Log($"Warning: Tried to enter {callback.ChatRoomName} without getting an invite, possible group invite?");
 				return;
 			}
 
