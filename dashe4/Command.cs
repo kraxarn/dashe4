@@ -1919,9 +1919,9 @@ namespace dashe4
 				{
 					if (kraxbot.TryGetFriendDetails(userID, out var info) && !string.IsNullOrEmpty(info.GameName))
 					{
-						SendMessage(chatRoomID, Equals(info.GameServerIP, IPAddress.None)
+						SendMessage(chatRoomID, Equals(info.GameServer, IPAddress.None)
 							? $"{userName} playing {info.GameName} ({user.Rank})"
-							: $"{userName} playing {info.GameName} on {info.GameServerIP} ({user.Rank})");
+							: $"{userName} playing {info.GameName} on {info.GameServer} ({user.Rank})");
 					}
 					else
 						SendMessage(chatRoomID, $"{userName} ({user.Rank})");

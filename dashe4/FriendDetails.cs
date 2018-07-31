@@ -20,7 +20,7 @@ namespace dashe4
 		public string GameName;
 		public string Name;
 
-		public IPAddress GameServerIP;
+		public IPAddress GameServer;
 
 		public DateTime LastLogOff;
 		public DateTime LastLogOn;
@@ -37,7 +37,7 @@ namespace dashe4
 
 			GameID         = callback.GameID;
 			GameName       = callback.GameName;
-			GameServerIP   = callback.GameServerIP;
+			GameServer     = callback.GameServerIP;
 			GameServerPort = callback.GameServerPort;
 			QueryPort      = callback.QueryPort;
 
