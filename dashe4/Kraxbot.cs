@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using Newtonsoft.Json;
 using SteamKit2;
+using SteamKit2.Internal;
 
 namespace dashe4
 {
@@ -254,6 +255,19 @@ namespace dashe4
 	    public int NumInvites => community.NumInvites;
 
 	    public void AcceptNewLoginKey(SteamUser.LoginKeyCallback loginKey) => user.AcceptNewLoginKey(loginKey);
+
+	    public void PlayGame(ulong gameID, string gameExtraInfo = null)
+	    {
+			var game = new ClientMsgProtobuf<CMsgClientGamesPlayed>(EMsg.ClientGamesPlayed);
+
+			game.Body.games_played.Add(new CMsgClientGamesPlayed.GamePlayed
+			{
+				game_id = gameID,
+				game_extra_info = gameExtraInfo
+			});
+
+			client.Send(game);
+		}
 
 		/// <summary>
 		/// Gets chatroom settings and adds them to chatroom list if needed

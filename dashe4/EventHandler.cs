@@ -270,6 +270,9 @@ namespace dashe4
 		private void OnFriendsList(SteamFriends.FriendsListCallback callback)
 	    {
 			// TODO: Auto-join chatrooms here?
+			
+			// Start game
+			kraxbot.PlayGame(205);
 	    }
 
 		private void OnChatMemberInfo(SteamFriends.ChatMemberInfoCallback callback)
